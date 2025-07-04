@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="InfoTextStyle" parent="TextAppearance.AppCompat.Medium">
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/md_theme_on_surface</item>
+    </style>
+
+    <style name="HighlightTextStyle" parent="InfoTextStyle">
+        <item name="android:textColor">@color/md_theme_primary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <!-- Card Styles -->
+    <style name="CardStyle">
+        <item name="android:layout_margin">8dp</item>
+        <item name="android:background">@color/card_background</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+
+    <style name="InfoCardStyle" parent="CardStyle">
+        <item name="android:background">@color/light_blue</item>
+    </style>
+
+    <!-- Section Title Style -->
+    <style name="SectionTitleStyle">
+        <item name="android:textColor">@color/md_theme_primary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:layout_marginBottom">12dp</item>
+        <item name="android:layout_marginTop">16dp</item>
+    </style>
+
+    <!-- Financial Item Style -->
+    <style name="FinancialItemStyle">
+        <item name="android:textColor">@color/md_theme_on_surface</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:layout_marginVertical">4dp</item>
+        <item name="android:padding">8dp</item>
+    </style>
+
+    <!-- Amount Text Styles -->
+    <style name="PositiveAmountStyle" parent="FinancialItemStyle">
+        <item name="android:textColor">@color/success_color</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="NegativeAmountStyle" parent="FinancialItemStyle">
+        <item name="android:textColor">@color/expense_color</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>
