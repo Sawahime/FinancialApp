@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="添加工资项"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/md_theme_primary"
+        android:layout_marginBottom="16dp"
+        android:gravity="center" />
+
+    <!-- 工资项名称 -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:hint="工资项名称（如：加班费、奖金等）">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etSalaryItemName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- 金额 -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:hint="金额（元）">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etSalaryItemAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:text="0" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- 计算基数选项 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="计算基数设置"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/md_theme_on_surface"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="请选择该工资项是否纳入相应的计算基数："
+        android:textSize="14sp"
+        android:textColor="@color/md_theme_on_surface_variant"
+        android:layout_marginBottom="12dp" />
+
+    <!-- 纳税基数选项 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp"
+        android:gravity="center_vertical">
+
+        <CheckBox
+            android:id="@+id/cbIncludeTax"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="8dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="纳入个人所得税计算基数"
+                android:textSize="14sp"
+                android:textColor="@color/md_theme_on_surface" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="该工资项将计入个人所得税的计算"
+                android:textSize="12sp"
+                android:textColor="@color/md_theme_on_surface_variant" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 社保公积金基数选项 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp"
+        android:gravity="center_vertical">
+
+        <CheckBox
+            android:id="@+id/cbIncludeSocialSecurity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="8dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="纳入社保公积金计算基数"
+                android:textSize="14sp"
+                android:textColor="@color/md_theme_on_surface" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="该工资项将计入社保和公积金的缴费基数"
+                android:textSize="12sp"
+                android:textColor="@color/md_theme_on_surface_variant" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btnCancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="取消"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btnConfirm"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="添加" />
+    </LinearLayout>
+
+</LinearLayout>

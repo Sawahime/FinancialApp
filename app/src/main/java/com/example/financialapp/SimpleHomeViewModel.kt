@@ -32,6 +32,13 @@ class SimpleHomeViewModel(private val repository: SimpleFinancialRepository) : V
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    // 工资项详情展开状态
+    private val _salaryDetailsExpanded = MutableStateFlow(false)
+    val salaryDetailsExpanded: StateFlow<Boolean> = _salaryDetailsExpanded.asStateFlow()
+
+    // 当前工资项集合
+    val salaryItems: StateFlow<SalaryItemCollection> = repository.salaryItems
     
     init {
         // 设置初始月份
@@ -118,6 +125,14 @@ class SimpleHomeViewModel(private val repository: SimpleFinancialRepository) : V
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH) + 1
         )
+    }
+
+    /**
+     * 切换工资详情展开状态
+     */
+    fun toggleSalaryDetailsExpanded() {
+        _salaryDetailsExpanded.value = !_salaryDetailsExpanded.value
+        android.util.Log.d("HomeViewModel", "工资详情展开状态: ${_salaryDetailsExpanded.value}")
     }
     
     fun addExpenseRecord(amount: Double, category: String, description: String? = null) {

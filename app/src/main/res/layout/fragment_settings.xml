@@ -36,18 +36,82 @@
                     android:text="💰 工资设置"
                     android:layout_marginTop="0dp"/>
 
-                <com.google.android.material.textfield.TextInputLayout
+                <!-- 动态工资项容器 -->
+                <LinearLayout
+                    android:id="@+id/llSalaryItems"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="税前月薪（元）">
+                    android:orientation="vertical" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etGrossSalary"
-                        android:layout_width="match_parent"
+                <!-- 添加工资项按钮 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:id="@+id/ivAddSalaryItem"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_add"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:contentDescription="添加工资项" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:inputType="numberDecimal" />
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:text="添加工资项"
+                        android:textSize="14sp"
+                        android:textColor="@color/md_theme_primary"
+                        android:layout_marginStart="8dp" />
+                </LinearLayout>
+
+                <!-- 总工资显示 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@color/md_theme_primary_container"
+                    android:padding="12dp"
+                    android:layout_marginBottom="8dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvTotalSalary"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="总工资：0 元"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/md_theme_primary" />
+
+                        <TextView
+                            android:id="@+id/tvTaxableBase"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="纳税基数：0 元"
+                            android:textSize="12sp"
+                            android:textColor="@color/md_theme_on_primary_container" />
+
+                        <TextView
+                            android:id="@+id/tvSocialSecurityBase"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="社保基数：0 元"
+                            android:textSize="12sp"
+                            android:textColor="@color/md_theme_on_primary_container" />
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

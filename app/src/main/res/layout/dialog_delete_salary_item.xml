@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="删除工资项"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/md_theme_error"
+        android:layout_marginBottom="16dp"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/tvDeleteMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="确定要删除工资项「XXX」吗？"
+        android:textSize="16sp"
+        android:textColor="@color/md_theme_on_surface"
+        android:layout_marginBottom="16dp"
+        android:gravity="center" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="删除后该工资项的历史数据将被清除，此操作不可撤销。"
+        android:textSize="14sp"
+        android:textColor="@color/md_theme_on_surface_variant"
+        android:layout_marginBottom="16dp"
+        android:gravity="center" />
+
+    <!-- 不再提醒选项 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp"
+        android:gravity="center_vertical">
+
+        <CheckBox
+            android:id="@+id/cbDontAskAgain"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="不再提醒（以后删除工资项将直接执行）"
+            android:textSize="14sp"
+            android:textColor="@color/md_theme_on_surface_variant"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+    <!-- 按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btnCancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="取消"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btnDelete"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="删除"
+            android:backgroundTint="@color/md_theme_error" />
+    </LinearLayout>
+
+</LinearLayout>

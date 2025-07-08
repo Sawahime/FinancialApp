@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_marginBottom="8dp"
+    android:gravity="center_vertical">
+
+    <!-- 工资项输入 -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilSalaryItem"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:hint="工资项（元）">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etSalaryItemAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- 删除按钮 -->
+    <ImageView
+        android:id="@+id/ivDeleteSalaryItem"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/ic_delete"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="删除工资项"
+        android:visibility="visible" />
+
+
+
+</LinearLayout>

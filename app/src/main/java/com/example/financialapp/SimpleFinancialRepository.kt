@@ -13,7 +13,20 @@ class SimpleFinancialRepository {
     // 工资设置历史（按时间顺序存储）
     private val salarySettingsHistory = mutableListOf<SalarySettingsRecord>()
 
+    // 用户偏好设置
+    private var skipDeleteConfirmation = false
+
     // 当前显示的设置值（用于UI显示）
+    private val _salaryItems = MutableStateFlow(SalaryItemCollection.createDefault())
+    val salaryItems: StateFlow<SalaryItemCollection> = _salaryItems.asStateFlow()
+
+    // 向后兼容的属性
+    private val _basicSalary = MutableStateFlow(0.0)
+    val basicSalary: StateFlow<Double> = _basicSalary.asStateFlow()
+
+    private val _allowance = MutableStateFlow(0.0)
+    val allowance: StateFlow<Double> = _allowance.asStateFlow()
+
     private val _grossSalary = MutableStateFlow(0.0)
     val grossSalary: StateFlow<Double> = _grossSalary.asStateFlow()
 
@@ -72,15 +85,18 @@ class SimpleFinancialRepository {
         android.util.Log.d("Repository", "锚点系统：月份切换到${year}年${month}月，不自动创建记录")
     }
 
-    fun saveSettings(year: Int, month: Int, grossSalary: Double, personalSocialRate: Double,
+    fun saveSettings(year: Int, month: Int, salaryItems: SalaryItemCollection, personalSocialRate: Double,
                     companySocialRate: Double, personalHousingRate: Double, companyHousingRate: Double,
                     isHistoricalModification: Boolean = false) {
 
         android.util.Log.d("Repository", "=== 锚点系统：保存设置 ===")
-        android.util.Log.d("Repository", "设置${year}年${month}月: 工资=${grossSalary}")
+        android.util.Log.d("Repository", "设置${year}年${month}月: 总工资=${salaryItems.totalSalary}, 纳税基数=${salaryItems.taxableBase}, 社保基数=${salaryItems.socialSecurityBase}")
 
         // 锚点系统：保存设置即创建手动锚点
-        createManualAnchor(year, month, grossSalary, personalSocialRate, companySocialRate, personalHousingRate, companyHousingRate)
+        createManualAnchor(year, month, salaryItems, personalSocialRate, companySocialRate, personalHousingRate, companyHousingRate)
+
+        // 更新当前显示的工资项
+        _salaryItems.value = salaryItems
 
         // 更新当前显示的值
         updateCurrentDisplayValues()
@@ -90,6 +106,67 @@ class SimpleFinancialRepository {
 
         android.util.Log.d("Repository", "锚点系统：设置保存完成")
         debugPrintAnchors()
+    }
+
+    /**
+     * 添加工资项
+     */
+    fun addSalaryItem(item: SalaryItem) {
+        val currentItems = _salaryItems.value
+        val newItems = currentItems.addItem(item)
+        _salaryItems.value = newItems
+
+        android.util.Log.d("Repository", "添加工资项: ${item.name}, 金额=${item.amount}")
+    }
+
+    /**
+     * 删除工资项
+     */
+    fun removeSalaryItem(itemId: String): Boolean {
+        val currentItems = _salaryItems.value
+        val itemToRemove = currentItems.items.find { it.id == itemId }
+
+        if (itemToRemove == null) {
+            android.util.Log.w("Repository", "要删除的工资项不存在: $itemId")
+            return false
+        }
+
+        if (itemToRemove.isDefault) {
+            android.util.Log.w("Repository", "不能删除默认工资项: ${itemToRemove.name}")
+            return false
+        }
+
+        val newItems = currentItems.removeItem(itemId)
+        _salaryItems.value = newItems
+
+        android.util.Log.d("Repository", "删除工资项: ${itemToRemove.name}")
+        return true
+    }
+
+    /**
+     * 更新工资项金额
+     */
+    fun updateSalaryItemAmount(itemId: String, amount: Double) {
+        val currentItems = _salaryItems.value
+        val newItems = currentItems.updateItem(itemId, amount)
+        _salaryItems.value = newItems
+
+        android.util.Log.d("Repository", "更新工资项金额: $itemId = $amount")
+    }
+
+    /**
+     * 获取删除确认偏好设置
+     */
+    fun shouldSkipDeleteConfirmation(): Boolean {
+        return skipDeleteConfirmation
+    }
+
+    /**
+     * 设置删除确认偏好
+     */
+    fun setSkipDeleteConfirmation(skip: Boolean) {
+        skipDeleteConfirmation = skip
+        android.util.Log.d("Repository", "设置删除确认偏好: $skip")
     }
 
     private fun updateCurrentDisplayValues() {
@@ -102,13 +179,19 @@ class SimpleFinancialRepository {
             val month = parts[1].toInt()
             val settings = getEffectiveSettingsForMonth(year, month)
 
-            android.util.Log.d("Repository", "更新前 - 工资: ${_grossSalary.value}, 社保: ${_socialInsuranceRate.value}, 公积金: ${_housingFundRate.value}")
+            android.util.Log.d("Repository", "更新前 - 工资项: ${_salaryItems.value.items.size}个, 总工资: ${_grossSalary.value}, 社保: ${_socialInsuranceRate.value}, 公积金: ${_housingFundRate.value}")
 
+            // 更新工资项集合
+            _salaryItems.value = settings.salaryItems
+
+            // 向后兼容的属性更新
+            _basicSalary.value = settings.basicSalary
+            _allowance.value = settings.allowance
             _grossSalary.value = settings.grossSalary
             _socialInsuranceRate.value = settings.personalSocialInsuranceRate
             _housingFundRate.value = settings.personalHousingFundRate
 
-            android.util.Log.d("Repository", "更新后 - 工资: ${_grossSalary.value}, 社保: ${_socialInsuranceRate.value}, 公积金: ${_housingFundRate.value}")
+            android.util.Log.d("Repository", "更新后 - 工资项: ${_salaryItems.value.items.size}个, 总工资: ${_grossSalary.value}, 社保: ${_socialInsuranceRate.value}, 公积金: ${_housingFundRate.value}")
         }
     }
 
@@ -206,7 +289,7 @@ class SimpleFinancialRepository {
     private fun getDefaultSettings(): SalarySettingsRecord {
         return SalarySettingsRecord(
             id = 0,
-            grossSalary = 0.0,
+            salaryItems = SalaryItemCollection.createDefault(),
             personalSocialInsuranceRate = 0.0,
             companySocialInsuranceRate = 0.0,
             personalHousingFundRate = 0.0,
@@ -239,14 +322,14 @@ class SimpleFinancialRepository {
     /**
      * 锚点系统：创建手动锚点
      */
-    private fun createManualAnchor(year: Int, month: Int, grossSalary: Double,
+    private fun createManualAnchor(year: Int, month: Int, salaryItems: SalaryItemCollection,
                                  personalSocialRate: Double, companySocialRate: Double,
                                  personalHousingRate: Double, companyHousingRate: Double) {
 
         android.util.Log.d("Repository", "创建手动锚点: ${year}年${month}月")
 
         // 1. 创建或更新当前月份的锚点
-        val anchorRecord = createAnchorRecord(year, month, grossSalary, personalSocialRate,
+        val anchorRecord = createAnchorRecord(year, month, salaryItems, personalSocialRate,
                                             companySocialRate, personalHousingRate, companyHousingRate,
                                             isManual = true)
 
@@ -262,7 +345,7 @@ class SimpleFinancialRepository {
     /**
      * 创建锚点记录
      */
-    private fun createAnchorRecord(year: Int, month: Int, grossSalary: Double,
+    private fun createAnchorRecord(year: Int, month: Int, salaryItems: SalaryItemCollection,
                                  personalSocialRate: Double, companySocialRate: Double,
                                  personalHousingRate: Double, companyHousingRate: Double,
                                  isManual: Boolean): SalarySettingsRecord {
@@ -274,7 +357,7 @@ class SimpleFinancialRepository {
 
         val newRecord = SalarySettingsRecord(
             id = System.currentTimeMillis(),
-            grossSalary = grossSalary,
+            salaryItems = salaryItems,
             personalSocialInsuranceRate = personalSocialRate,
             companySocialInsuranceRate = companySocialRate,
             personalHousingFundRate = personalHousingRate,
@@ -398,7 +481,7 @@ class SimpleFinancialRepository {
 
         val inheritedRecord = SalarySettingsRecord(
             id = System.currentTimeMillis() + (year * 100 + month), // 确保ID唯一
-            grossSalary = sourceAnchor.grossSalary,
+            salaryItems = sourceAnchor.salaryItems,
             personalSocialInsuranceRate = sourceAnchor.personalSocialInsuranceRate,
             companySocialInsuranceRate = sourceAnchor.companySocialInsuranceRate,
             personalHousingFundRate = sourceAnchor.personalHousingFundRate,
@@ -450,7 +533,7 @@ class SimpleFinancialRepository {
                 record.isAnchor && record.isAutoAnchor -> "自动锚点"
                 else -> "继承记录"
             }
-            android.util.Log.d("Repository", "${year}年${month}月: 工资=${record.grossSalary}, 类型=${type}")
+            android.util.Log.d("Repository", "${year}年${month}月: 基本工资=${record.basicSalary}, 补贴=${record.allowance}, 总工资=${record.grossSalary}, 类型=${type}")
         }
         android.util.Log.d("Repository", "=== 锚点状态结束 ===")
     }
@@ -685,15 +768,27 @@ class SimpleFinancialRepository {
         // 获取当前月份的有效设置
         val currentSettings = getSettingsForCurrentMonth()
 
-        val gross = currentSettings.grossSalary
-        val socialInsurance = gross * currentSettings.personalSocialInsuranceRate
-        val housingFund = gross * currentSettings.personalHousingFundRate
-        val taxableIncome = gross - socialInsurance - housingFund
-        val tax = calculateTax(taxableIncome)
-        val netIncome = gross - socialInsurance - housingFund - tax
+        val salaryItems = currentSettings.salaryItems
+        val totalSalary = salaryItems.totalSalary
+        val taxableBase = salaryItems.taxableBase
+        val socialSecurityBase = salaryItems.socialSecurityBase
+
+        // 社保公积金基数：根据工资项设置计算
+        val socialInsurance = socialSecurityBase * currentSettings.personalSocialInsuranceRate
+        val housingFund = socialSecurityBase * currentSettings.personalHousingFundRate
+
+        // 纳税基数：根据工资项设置计算，减去社保公积金
+        val taxableIncome = taxableBase - socialInsurance - housingFund
+
+        // 使用累积计税法计算税额
+        val tax = calculateCumulativeTax()
+        val netIncome = totalSalary - socialInsurance - housingFund - tax
+
+        android.util.Log.d("Repository", "财务计算: 总工资=${totalSalary}, 纳税基数=${taxableBase}, 社保基数=${socialSecurityBase}")
+        android.util.Log.d("Repository", "社保=${socialInsurance}, 公积金=${housingFund}, 税额=${tax}, 实发=${netIncome}")
 
         return FinancialData(
-            grossSalary = gross,
+            grossSalary = totalSalary,
             socialInsurance = socialInsurance,
             housingFund = housingFund,
             tax = tax,
@@ -703,19 +798,84 @@ class SimpleFinancialRepository {
         )
     }
     
-    private fun calculateTax(taxableIncome: Double): Double {
-        val threshold = 5000.0
-        if (taxableIncome <= threshold) return 0.0
-        
-        val taxable = taxableIncome - threshold
+    /**
+     * 累积计税法：计算当前月份应缴个人所得税
+     */
+    private fun calculateCumulativeTax(): Double {
+        val currentMonthKey = _currentYearMonth.value
+        if (currentMonthKey.isEmpty()) return 0.0
+
+        val parts = currentMonthKey.split("-")
+        val currentYear = parts[0].toInt()
+        val currentMonth = parts[1].toInt()
+
+        // 计算年初到当前月份的累计应纳税所得额
+        val cumulativeTaxableIncome = calculateCumulativeTaxableIncome(currentYear, currentMonth)
+
+        // 计算累计应纳税额
+        val cumulativeTax = calculateAnnualTax(cumulativeTaxableIncome)
+
+        // 计算年初到上月的累计应纳税额
+        val previousCumulativeTax = if (currentMonth > 1) {
+            val previousCumulativeTaxableIncome = calculateCumulativeTaxableIncome(currentYear, currentMonth - 1)
+            calculateAnnualTax(previousCumulativeTaxableIncome)
+        } else {
+            0.0
+        }
+
+        // 当月应缴税额 = 累计应纳税额 - 累计已缴税额
+        val currentMonthTax = cumulativeTax - previousCumulativeTax
+
+        android.util.Log.d("Repository", "累积计税: ${currentYear}年${currentMonth}月")
+        android.util.Log.d("Repository", "累计应纳税所得额: ${cumulativeTaxableIncome}")
+        android.util.Log.d("Repository", "累计应纳税额: ${cumulativeTax}")
+        android.util.Log.d("Repository", "上月累计已缴税额: ${previousCumulativeTax}")
+        android.util.Log.d("Repository", "当月应缴税额: ${currentMonthTax}")
+
+        return currentMonthTax.coerceAtLeast(0.0)
+    }
+
+    /**
+     * 计算年初到指定月份的累计应纳税所得额
+     */
+    private fun calculateCumulativeTaxableIncome(year: Int, month: Int): Double {
+        var cumulativeTaxableIncome = 0.0
+
+        for (m in 1..month) {
+            val settings = getEffectiveSettingsForMonth(year, m)
+            val salaryItems = settings.salaryItems
+            val taxableBase = salaryItems.taxableBase
+            val socialSecurityBase = salaryItems.socialSecurityBase
+
+            // 社保公积金基数：根据工资项设置
+            val socialInsurance = socialSecurityBase * settings.personalSocialInsuranceRate
+            val housingFund = socialSecurityBase * settings.personalHousingFundRate
+
+            // 纳税基数：根据工资项设置减去社保公积金
+            val monthlyTaxableIncome = taxableBase - socialInsurance - housingFund
+
+            // 减去起征点（每月5000元）
+            val monthlyTaxable = (monthlyTaxableIncome - 5000.0).coerceAtLeast(0.0)
+            cumulativeTaxableIncome += monthlyTaxable
+        }
+
+        return cumulativeTaxableIncome
+    }
+
+    /**
+     * 根据全年累计应纳税所得额计算年度应纳税额
+     * 使用累积计税法的税率表和速算扣除数
+     */
+    private fun calculateAnnualTax(cumulativeTaxableIncome: Double): Double {
         return when {
-            taxable <= 3000 -> taxable * 0.03
-            taxable <= 12000 -> taxable * 0.10 - 210
-            taxable <= 25000 -> taxable * 0.20 - 1410
-            taxable <= 35000 -> taxable * 0.25 - 2660
-            taxable <= 55000 -> taxable * 0.30 - 4410
-            taxable <= 80000 -> taxable * 0.35 - 7160
-            else -> taxable * 0.45 - 15160
+            cumulativeTaxableIncome <= 0 -> 0.0
+            cumulativeTaxableIncome <= 36000 -> cumulativeTaxableIncome * 0.03 - 0
+            cumulativeTaxableIncome <= 144000 -> cumulativeTaxableIncome * 0.10 - 2520
+            cumulativeTaxableIncome <= 300000 -> cumulativeTaxableIncome * 0.20 - 16920
+            cumulativeTaxableIncome <= 420000 -> cumulativeTaxableIncome * 0.25 - 31920
+            cumulativeTaxableIncome <= 660000 -> cumulativeTaxableIncome * 0.30 - 52920
+            cumulativeTaxableIncome <= 960000 -> cumulativeTaxableIncome * 0.35 - 85920
+            else -> cumulativeTaxableIncome * 0.45 - 181920
         }
     }
 }
@@ -747,7 +907,7 @@ data class IncomeRecord(
 
 data class SalarySettingsRecord(
     val id: Long,
-    val grossSalary: Double,
+    val salaryItems: SalaryItemCollection,   // 工资项集合
     val personalSocialInsuranceRate: Double,
     val companySocialInsuranceRate: Double,
     val personalHousingFundRate: Double,
@@ -760,4 +920,11 @@ data class SalarySettingsRecord(
     // 锚点系统
     val isAnchor: Boolean = false,           // 是否为锚点
     val isAutoAnchor: Boolean = false        // 是否为自动锚点（当前月份自动生成）
-)
+) {
+    // 向后兼容的计算属性
+    val basicSalary: Double get() = salaryItems.basicSalaryAmount
+    val allowance: Double get() = salaryItems.items.find { it.id == SalaryItem.ALLOWANCE_ID }?.amount ?: 0.0
+    val grossSalary: Double get() = salaryItems.totalSalary
+    val taxableBase: Double get() = salaryItems.taxableBase
+    val socialSecurityBase: Double get() = salaryItems.socialSecurityBase
+}

@@ -47,10 +47,10 @@ class SettingsFragment : Fragment() {
     }
 
     private fun setupUI() {
-        // 设置文本监听器
-        binding.etGrossSalary.addTextChangedListener(createTextWatcher { text ->
-            viewModel.updateGrossSalary(text)
-        })
+        // 设置添加工资项按钮
+        binding.ivAddSalaryItem.setOnClickListener {
+            showAddSalaryItemDialog()
+        }
 
         binding.etPersonalSocialInsuranceRate.addTextChangedListener(createTextWatcher { text ->
             viewModel.updatePersonalSocialInsuranceRate(text)
@@ -80,9 +80,156 @@ class SettingsFragment : Fragment() {
         binding.btnReset.setOnClickListener {
             viewModel.resetToDefaults()
         }
-
-
     }
+
+    /**
+     * 显示添加工资项对话框
+     */
+    private fun showAddSalaryItemDialog() {
+        val dialog = AddSalaryItemDialog.newInstance { name, amount, includeTax, includeSocialSecurity ->
+            viewModel.addSalaryItem(name, amount, includeTax, includeSocialSecurity)
+        }
+        dialog.show(parentFragmentManager, "AddSalaryItemDialog")
+    }
+
+    /**
+     * 显示删除工资项确认对话框
+     */
+    private fun showDeleteSalaryItemDialog(item: SalaryItem) {
+        if (viewModel.shouldSkipDeleteConfirmation()) {
+            // 直接删除
+            deleteSalaryItem(item.id)
+        } else {
+            // 显示确认对话框
+            val dialog = DeleteSalaryItemDialog.newInstance(item.name) { skipFutureConfirmation ->
+                if (skipFutureConfirmation) {
+                    viewModel.setSkipDeleteConfirmation(true)
+                }
+                deleteSalaryItem(item.id)
+            }
+            dialog.show(parentFragmentManager, "DeleteSalaryItemDialog")
+        }
+    }
+
+    /**
+     * 删除工资项
+     */
+    private fun deleteSalaryItem(itemId: String) {
+        val success = viewModel.removeSalaryItem(itemId)
+        if (!success) {
+            // 显示错误消息
+            android.widget.Toast.makeText(context, "无法删除该工资项", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * 显示编辑工资项对话框
+     */
+    private fun showEditSalaryItemDialog(item: SalaryItem) {
+        val dialog = EditSalaryItemDialog.newInstance(item) { updatedItem ->
+            viewModel.updateSalaryItemAmount(updatedItem.id, updatedItem.amount)
+            // 如果基数设置有变化，需要重新保存整个工资项集合
+            // 这里简化处理，只更新金额
+        }
+        dialog.show(parentFragmentManager, "EditSalaryItemDialog")
+    }
+
+    // 记录当前工资项的ID列表，用于检测结构变化
+    private var currentSalaryItemIds = emptyList<String>()
+
+    /**
+     * 更新工资项UI
+     */
+    private fun updateSalaryItemsUI(salaryItems: SalaryItemCollection) {
+        val newItemIds = salaryItems.sortedItems.map { it.id }
+
+        // 检查是否需要重新创建UI（工资项数量或顺序发生变化）
+        if (newItemIds != currentSalaryItemIds) {
+            // 工资项结构发生变化，重新创建UI
+            binding.llSalaryItems.removeAllViews()
+
+            for (item in salaryItems.sortedItems) {
+                addSalaryItemView(item)
+            }
+
+            currentSalaryItemIds = newItemIds
+        } else {
+            // 只是金额变化，更新现有的输入框值（如果需要）
+            updateExistingSalaryItemValues(salaryItems)
+        }
+
+        // 更新总计显示
+        binding.tvTotalSalary.text = "总工资：${salaryItems.totalSalary} 元"
+        binding.tvTaxableBase.text = "纳税基数：${salaryItems.taxableBase} 元"
+        binding.tvSocialSecurityBase.text = "社保基数：${salaryItems.socialSecurityBase} 元"
+    }
+
+    /**
+     * 更新现有工资项的值（不重新创建UI）
+     */
+    private fun updateExistingSalaryItemValues(salaryItems: SalaryItemCollection) {
+        // 暂时禁用更新，避免在用户输入时干扰
+        // 这个方法主要用于结构变化后的同步，而不是实时更新
+        // 实时更新由TextWatcher直接处理
+    }
+
+    /**
+     * 为单个工资项创建视图
+     */
+    private fun addSalaryItemView(item: SalaryItem) {
+        val itemView = layoutInflater.inflate(R.layout.item_salary_item, binding.llSalaryItems, false)
+
+        // 获取视图组件
+        val tilSalaryItem = itemView.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.tilSalaryItem)
+        val etAmount = itemView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etSalaryItemAmount)
+        val ivDelete = itemView.findViewById<android.widget.ImageView>(R.id.ivDeleteSalaryItem)
+
+        // 设置工资项名称和金额
+        tilSalaryItem.hint = "${item.name}（元）"
+        // 格式化金额显示，避免不必要的小数点
+        val amountText = if (item.amount > 0) {
+            if (item.amount == item.amount.toInt().toDouble()) {
+                item.amount.toInt().toString()  // 整数显示为整数
+            } else {
+                item.amount.toString()  // 小数显示为小数
+            }
+        } else {
+            ""  // 0或负数显示为空
+        }
+        etAmount.setText(amountText)
+
+        // 设置删除按钮可见性（默认项目不显示删除按钮）
+        ivDelete.visibility = if (item.isDefault) android.view.View.GONE else android.view.View.VISIBLE
+
+        // 设置标签以便后续更新
+        itemView.tag = item.id
+
+        // 设置金额变化监听器
+        etAmount.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val text = s?.toString() ?: ""
+                val amount = text.toDoubleOrNull() ?: 0.0
+                viewModel.updateSalaryItemAmount(item.id, amount)
+            }
+        })
+
+        // 设置删除按钮点击监听器
+        ivDelete.setOnClickListener {
+            showDeleteSalaryItemDialog(item)
+        }
+
+        // 设置点击编辑监听器
+        itemView.setOnClickListener {
+            showEditSalaryItemDialog(item)
+        }
+
+        // 添加到容器
+        binding.llSalaryItems.addView(itemView)
+    }
+
+
 
     private fun showSettingsHistoryDialog() {
         val dialogBinding = DialogSettingsHistoryBinding.inflate(layoutInflater)
@@ -145,17 +292,16 @@ class SettingsFragment : Fragment() {
         }
     }
 
+
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
 
 
-                // 观察各个字段的值
+                // 观察工资项集合变化
                 launch {
-                    viewModel.grossSalary.collect { salary ->
-                        if (binding.etGrossSalary.text.toString() != salary) {
-                            binding.etGrossSalary.setText(salary)
-                        }
+                    viewModel.salaryItems.collect { salaryItems ->
+                        updateSalaryItemsUI(salaryItems)
                     }
                 }
 

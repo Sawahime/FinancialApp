@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -54,8 +56,10 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupUI() {
-        // 设置监听器
-
+        // 设置工资详情展开按钮
+        binding.llSalaryHeader.setOnClickListener {
+            viewModel.toggleSalaryDetailsExpanded()
+        }
 
         binding.btnAddExpense.setOnClickListener {
             showAddExpenseDialog()
@@ -79,6 +83,20 @@ class HomeFragment : Fragment() {
                 launch {
                     viewModel.financialData.collect { financialData ->
                         updateFinanceDisplay(financialData)
+                    }
+                }
+
+                // 观察工资详情展开状态
+                launch {
+                    viewModel.salaryDetailsExpanded.collect { expanded ->
+                        updateSalaryDetailsVisibility(expanded)
+                    }
+                }
+
+                // 观察工资项变化
+                launch {
+                    viewModel.salaryItems.collect { salaryItems ->
+                        updateSalaryDetailsContent(salaryItems)
                     }
                 }
 
@@ -323,6 +341,49 @@ class HomeFragment : Fragment() {
         } catch (e: Exception) {
             android.util.Log.w("HomeFragment", "关闭输入法失败", e)
         }
+    }
+
+    /**
+     * 更新工资详情可见性
+     */
+    private fun updateSalaryDetailsVisibility(expanded: Boolean) {
+        binding.llSalaryDetails.visibility = if (expanded) View.VISIBLE else View.GONE
+        binding.ivSalaryExpand.setImageResource(
+            if (expanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more
+        )
+    }
+
+    /**
+     * 更新工资详情内容
+     */
+    private fun updateSalaryDetailsContent(salaryItems: SalaryItemCollection) {
+        // 清空现有内容
+        binding.llSalaryDetails.removeAllViews()
+
+        // 为每个工资项添加详情行
+        for (item in salaryItems.sortedItems) {
+            if (item.amount > 0) {  // 只显示有金额的工资项
+                addSalaryDetailItem(item)
+            }
+        }
+    }
+
+    /**
+     * 添加单个工资项详情
+     */
+    private fun addSalaryDetailItem(item: SalaryItem) {
+        val textView = TextView(requireContext()).apply {
+            text = "  • ${item.name}：${item.amount} 元"
+            textSize = 14f
+            setTextColor(resources.getColor(R.color.md_theme_on_surface_variant, null))
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = 4
+            }
+        }
+        binding.llSalaryDetails.addView(textView)
     }
 
     override fun onDestroyView() {
