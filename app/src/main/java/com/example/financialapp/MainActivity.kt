@@ -60,6 +60,11 @@ class MainActivity : AppCompatActivity() {
         binding.btnNextMonth.setOnClickListener {
             goToNextMonth()
         }
+
+        // 月份区域点击事件
+        binding.tvCurrentMonth.setOnClickListener {
+            showYearMonthInputDialog()
+        }
     }
 
     private fun goToPreviousMonth() {
@@ -87,11 +92,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateMonthDisplay() {
-        val monthNames = arrayOf(
-            "1月", "2月", "3月", "4月", "5月", "6月",
-            "7月", "8月", "9月", "10月", "11月", "12月"
-        )
-        binding.tvCurrentMonth.text = "${currentYear}年${monthNames[currentMonth - 1]}"
+        binding.tvCurrentMonth.text = "${currentYear}年${currentMonth}月"
     }
 
     private fun notifyFragmentsMonthChanged() {
@@ -120,6 +121,84 @@ class MainActivity : AppCompatActivity() {
 
     fun getCurrentYear() = currentYear
     fun getCurrentMonth() = currentMonth
+
+    /**
+     * 显示年月选择对话框
+     */
+    private fun showYearMonthInputDialog() {
+        // 创建容器布局
+        val container = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(50, 30, 50, 30)
+        }
+
+        // 年份输入
+        val yearLabel = android.widget.TextView(this).apply {
+            text = "年份："
+            textSize = 16f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+        }
+        val yearEditText = android.widget.EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setText(currentYear.toString())
+            hint = "请输入年份（1900-2100）"
+            selectAll()
+        }
+
+        // 月份输入
+        val monthLabel = android.widget.TextView(this).apply {
+            text = "月份："
+            textSize = 16f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setPadding(0, 30, 0, 0)
+        }
+        val monthEditText = android.widget.EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setText(currentMonth.toString())
+            hint = "请输入月份（1-12）"
+        }
+
+        container.addView(yearLabel)
+        container.addView(yearEditText)
+        container.addView(monthLabel)
+        container.addView(monthEditText)
+
+        // 显示对话框
+        android.app.AlertDialog.Builder(this)
+            .setTitle("📅 选择年月")
+            .setMessage("请输入要跳转到的年份和月份：")
+            .setView(container)
+            .setPositiveButton("确定") { _, _ ->
+                val yearText = yearEditText.text.toString()
+                val monthText = monthEditText.text.toString()
+
+                val year = yearText.toIntOrNull()
+                val month = monthText.toIntOrNull()
+
+                var hasError = false
+                var errorMessage = ""
+
+                if (year == null || year !in 1900..2100) {
+                    hasError = true
+                    errorMessage = "请输入有效的年份（1900-2100）"
+                } else if (month == null || month !in 1..12) {
+                    hasError = true
+                    errorMessage = "请输入有效的月份（1-12）"
+                }
+
+                if (hasError) {
+                    android.widget.Toast.makeText(this, errorMessage, android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    currentYear = year!!
+                    currentMonth = month!!
+                    updateMonthDisplay()
+                    notifyFragmentsMonthChanged()
+                    android.util.Log.d("MainActivity", "用户手动切换到: ${year}年${month}月")
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
 
     override fun onDestroy() {
         super.onDestroy()

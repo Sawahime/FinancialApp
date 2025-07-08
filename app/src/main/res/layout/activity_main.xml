@@ -40,7 +40,11 @@
                 android:text="2025年7月"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:gravity="center" />
+                android:gravity="center"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true" />
 
             <ImageButton
                 android:id="@+id/btnNextMonth"
