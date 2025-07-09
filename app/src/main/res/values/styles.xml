@@ -50,4 +50,29 @@
         <item name="android:textColor">@color/expense_color</item>
         <item name="android:textStyle">bold</item>
     </style>
+
+    <!-- 计算器按钮样式 - 数字按钮 -->
+    <style name="CalculatorButtonStyle" parent="Widget.Material3.Button">
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/number_button_color</item>
+        <item name="cornerRadius">4dp</item>
+    </style>
+
+    <!-- 运算符按钮 -->
+    <style name="CalculatorButtonStyle.Operator">
+        <item name="backgroundTint">@color/blue_500</item>
+    </style>
+
+    <!-- 功能按钮 (AC, DEL) -->
+    <style name="CalculatorButtonStyle.Function">
+        <item name="backgroundTint">@color/orange_500</item>
+    </style>
+
+    <!-- 主要按钮 (OK) -->
+    <style name="CalculatorButtonStyle.Primary">
+        <item name="backgroundTint">@color/success_color</item>
+    </style>
 </resources>

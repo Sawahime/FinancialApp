@@ -41,4 +41,16 @@
     <color name="success_color">#FF4CAF50</color>
     <color name="warning_color">#FFFF9800</color>
     <color name="error_color">#FFF44336</color>
+
+    <!-- 计算器相关颜色 -->
+    <color name="dark_blue">#FF1976D2</color>
+    <color name="dark_green">#FF388E3C</color>
+    <color name="light_gray">#FFF5F5F5</color>
+    <color name="gray">#FFCCCCCC</color>
+    <color name="dark_gray">#FF424242</color>
+    <color name="blue_500">#FF2196F3</color>
+    <color name="red_500">#FFF44336</color>
+    <color name="orange_500">#FFFF9800</color>
+    <color name="dark_orange">#FFF57C00</color>
+    <color name="number_button_color">#FF616161</color>
 </resources>

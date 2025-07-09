@@ -1,5 +1,6 @@
 package com.example.financialapp
 
+import android.animation.ObjectAnimator
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -9,8 +10,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class ExpenseRecordsAdapter(
-    private val records: List<ExpenseRecord>,
-    private val onDeleteClick: (Long) -> Unit
+    private val records: MutableList<ExpenseRecord>,
+    private val onDeleteClick: (Int, Long) -> Unit
 ) : RecyclerView.Adapter<ExpenseRecordsAdapter.ViewHolder>() {
 
     private val currencyFormat = NumberFormat.getCurrencyInstance(Locale.CHINA)
@@ -37,10 +38,46 @@ class ExpenseRecordsAdapter(
             tvDate.text = dateFormat.format(Date(record.date))
             
             btnDelete.setOnClickListener {
-                onDeleteClick(record.id)
+                animateAndRemoveItem(holder, position) {
+                    onDeleteClick(position, record.id)
+                }
             }
         }
     }
 
     override fun getItemCount() = records.size
+
+    /**
+     * 执行删除动画并移除项目
+     */
+    private fun animateAndRemoveItem(holder: ViewHolder, position: Int, onAnimationEnd: () -> Unit) {
+        // 创建淡出动画
+        val fadeOut = ObjectAnimator.ofFloat(holder.itemView, "alpha", 1f, 0f)
+        fadeOut.duration = 300
+
+        // 创建缩放动画
+        val scaleX = ObjectAnimator.ofFloat(holder.itemView, "scaleX", 1f, 0f)
+        val scaleY = ObjectAnimator.ofFloat(holder.itemView, "scaleY", 1f, 0f)
+        scaleX.duration = 300
+        scaleY.duration = 300
+
+        // 动画结束后移除项目
+        fadeOut.addListener(object : android.animation.AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: android.animation.Animator) {
+                // 从列表中移除项目
+                if (position < records.size) {
+                    records.removeAt(position)
+                    notifyItemRemoved(position)
+                    notifyItemRangeChanged(position, records.size)
+                }
+                // 执行删除回调
+                onAnimationEnd()
+            }
+        })
+
+        // 开始动画
+        fadeOut.start()
+        scaleX.start()
+        scaleY.start()
+    }
 }

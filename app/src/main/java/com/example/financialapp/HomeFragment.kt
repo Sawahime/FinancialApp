@@ -66,15 +66,13 @@ class HomeFragment : Fragment() {
             toggleSocialInsuranceDetails()
         }
 
-        binding.btnAddExpense.setOnClickListener {
-            showAddExpenseDialog()
+        // 记账按钮
+        binding.fabAddRecord.setOnClickListener {
+            showAccountingDialog()
         }
 
-        binding.btnAddOtherIncome.setOnClickListener {
-            showAddOtherIncomeDialog()
-        }
-
-        binding.btnViewRecords.setOnClickListener {
+        // 生活收支标题点击查看记录
+        binding.tvLifeExpensesTitle.setOnClickListener {
             showRecordsManagementDialog()
         }
     }
@@ -175,6 +173,32 @@ class HomeFragment : Fragment() {
             detailsLayout.visibility = View.GONE
             expandIcon.animate().rotation(0f).setDuration(200).start()
         }
+    }
+
+    /**
+     * 显示记账对话框
+     */
+    private fun showAccountingDialog() {
+        val accountingDialog = AccountingDialog(requireContext()) { isExpense, amount, note, date, category, subCategory ->
+            // 从选择的日期中提取年月
+            val calendar = java.util.Calendar.getInstance().apply { time = date }
+            val year = calendar.get(java.util.Calendar.YEAR)
+            val month = calendar.get(java.util.Calendar.MONTH) + 1 // Calendar.MONTH 是0-based
+
+            if (isExpense) {
+                // 构建分类信息
+                val categoryInfo = when {
+                    category != null && subCategory != null -> "$category-$subCategory"
+                    category != null -> category
+                    else -> "支出"
+                }
+                // 使用选择的年月保存记录
+                viewModel.addExpenseRecordForDate(year, month, amount, categoryInfo, note)
+            } else {
+                viewModel.addOtherIncomeForDate(year, month, amount, note)
+            }
+        }
+        accountingDialog.show()
     }
 
     private fun showAddExpenseDialog() {
@@ -298,16 +322,56 @@ class HomeFragment : Fragment() {
         // 设置RecyclerView
         dialogBinding.recyclerViewRecords.layoutManager = LinearLayoutManager(requireContext())
 
-        // 初始显示支出记录
-        showExpenseRecords(dialogBinding)
+        // 记录管理对话框的当前年月（使用主页当前显示的年月）
+        var dialogYear = (activity as? MainActivity)?.getCurrentYear() ?: viewModel.currentYear.value
+        var dialogMonth = (activity as? MainActivity)?.getCurrentMonth() ?: viewModel.currentMonth.value
+
+        // 更新月份显示
+        fun updateMonthDisplay() {
+            dialogBinding.tvCurrentMonth.text = "${dialogYear}年${dialogMonth}月"
+        }
+
+        // 刷新记录显示
+        fun refreshRecords() {
+            when (dialogBinding.tabLayout.selectedTabPosition) {
+                0 -> showAllRecords(dialogBinding, dialogYear, dialogMonth)
+                1 -> showExpenseRecords(dialogBinding, dialogYear, dialogMonth)
+                2 -> showIncomeRecords(dialogBinding, dialogYear, dialogMonth)
+            }
+        }
+
+        updateMonthDisplay()
+
+        // 月份导航
+        dialogBinding.btnPreviousMonth.setOnClickListener {
+            val calendar = java.util.Calendar.getInstance().apply {
+                set(dialogYear, dialogMonth - 1, 1)
+                add(java.util.Calendar.MONTH, -1)
+            }
+            dialogYear = calendar.get(java.util.Calendar.YEAR)
+            dialogMonth = calendar.get(java.util.Calendar.MONTH) + 1
+            updateMonthDisplay()
+            refreshRecords()
+        }
+
+        dialogBinding.btnNextMonth.setOnClickListener {
+            val calendar = java.util.Calendar.getInstance().apply {
+                set(dialogYear, dialogMonth - 1, 1)
+                add(java.util.Calendar.MONTH, 1)
+            }
+            dialogYear = calendar.get(java.util.Calendar.YEAR)
+            dialogMonth = calendar.get(java.util.Calendar.MONTH) + 1
+            updateMonthDisplay()
+            refreshRecords()
+        }
+
+        // 初始显示全部记录
+        showAllRecords(dialogBinding, dialogYear, dialogMonth)
 
         // Tab切换监听
         dialogBinding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                when (tab?.position) {
-                    0 -> showExpenseRecords(dialogBinding)
-                    1 -> showIncomeRecords(dialogBinding)
-                }
+                refreshRecords()
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
@@ -320,8 +384,36 @@ class HomeFragment : Fragment() {
         dialog.show()
     }
 
-    private fun showExpenseRecords(dialogBinding: DialogRecordsManagementBinding) {
-        val records = viewModel.getExpenseRecords()
+    private fun showAllRecords(dialogBinding: DialogRecordsManagementBinding, year: Int, month: Int) {
+        val expenseRecords = viewModel.getExpenseRecordsForDate(year, month)
+        val incomeRecords = viewModel.getOtherIncomeRecordsForDate(year, month)
+
+        if (expenseRecords.isEmpty() && incomeRecords.isEmpty()) {
+            dialogBinding.recyclerViewRecords.visibility = View.GONE
+            dialogBinding.tvEmptyState.visibility = View.VISIBLE
+            dialogBinding.tvEmptyState.text = "暂无记录"
+        } else {
+            dialogBinding.recyclerViewRecords.visibility = View.VISIBLE
+            dialogBinding.tvEmptyState.visibility = View.GONE
+
+            val adapter = AllRecordsAdapter(expenseRecords, incomeRecords) { position, isExpense, recordId ->
+                // 立即删除，如果失败则恢复
+                val currentAdapter = dialogBinding.recyclerViewRecords.adapter as? AllRecordsAdapter
+
+                if (isExpense) {
+                    viewModel.deleteExpenseRecordForDate(year, month, recordId)
+                } else {
+                    viewModel.deleteOtherIncomeRecordForDate(year, month, recordId)
+                }
+
+                // 注意：删除动画已经在适配器中处理，这里不需要刷新整个列表
+            }
+            dialogBinding.recyclerViewRecords.adapter = adapter
+        }
+    }
+
+    private fun showExpenseRecords(dialogBinding: DialogRecordsManagementBinding, year: Int, month: Int) {
+        val records = viewModel.getExpenseRecordsForDate(year, month).toMutableList()
         if (records.isEmpty()) {
             dialogBinding.recyclerViewRecords.visibility = View.GONE
             dialogBinding.tvEmptyState.visibility = View.VISIBLE
@@ -330,17 +422,17 @@ class HomeFragment : Fragment() {
             dialogBinding.recyclerViewRecords.visibility = View.VISIBLE
             dialogBinding.tvEmptyState.visibility = View.GONE
 
-            val adapter = ExpenseRecordsAdapter(records) { recordId ->
+            val adapter = ExpenseRecordsAdapter(records) { position, recordId ->
                 // 删除记录
-                viewModel.deleteExpenseRecord(recordId)
-                showExpenseRecords(dialogBinding) // 刷新列表
+                viewModel.deleteExpenseRecordForDate(year, month, recordId)
+                // 动画已经在适配器中处理，不需要刷新整个列表
             }
             dialogBinding.recyclerViewRecords.adapter = adapter
         }
     }
 
-    private fun showIncomeRecords(dialogBinding: DialogRecordsManagementBinding) {
-        val records = viewModel.getOtherIncomeRecords()
+    private fun showIncomeRecords(dialogBinding: DialogRecordsManagementBinding, year: Int, month: Int) {
+        val records = viewModel.getOtherIncomeRecordsForDate(year, month).toMutableList()
         if (records.isEmpty()) {
             dialogBinding.recyclerViewRecords.visibility = View.GONE
             dialogBinding.tvEmptyState.visibility = View.VISIBLE
@@ -349,10 +441,10 @@ class HomeFragment : Fragment() {
             dialogBinding.recyclerViewRecords.visibility = View.VISIBLE
             dialogBinding.tvEmptyState.visibility = View.GONE
 
-            val adapter = IncomeRecordsAdapter(records) { recordId ->
+            val adapter = IncomeRecordsAdapter(records) { position, recordId ->
                 // 删除记录
-                viewModel.deleteOtherIncomeRecord(recordId)
-                showIncomeRecords(dialogBinding) // 刷新列表
+                viewModel.deleteOtherIncomeRecordForDate(year, month, recordId)
+                // 动画已经在适配器中处理，不需要刷新整个列表
             }
             dialogBinding.recyclerViewRecords.adapter = adapter
         }

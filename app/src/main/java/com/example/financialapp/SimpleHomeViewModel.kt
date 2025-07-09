@@ -161,6 +161,40 @@ class SimpleHomeViewModel(private val repository: SimpleFinancialRepository) : V
         }
     }
 
+    /**
+     * 为指定日期添加支出记录
+     */
+    fun addExpenseRecordForDate(year: Int, month: Int, amount: Double, category: String, description: String? = null) {
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.Default) {
+                    repository.addExpenseRecord(year, month, amount, category, description)
+                }
+                android.util.Log.d("SimpleHomeViewModel", "添加支出记录到${year}年${month}月: ${amount}元")
+            } catch (e: Exception) {
+                _errorMessage.value = "添加支出记录失败: ${e.message}"
+                android.util.Log.e("SimpleHomeViewModel", "添加支出失败", e)
+            }
+        }
+    }
+
+    /**
+     * 为指定日期添加收入记录
+     */
+    fun addOtherIncomeForDate(year: Int, month: Int, amount: Double, description: String? = null) {
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.Default) {
+                    repository.addOtherIncomeRecord(year, month, amount, description)
+                }
+                android.util.Log.d("SimpleHomeViewModel", "添加收入记录到${year}年${month}月: ${amount}元")
+            } catch (e: Exception) {
+                _errorMessage.value = "添加其他收入失败: ${e.message}"
+                android.util.Log.e("SimpleHomeViewModel", "添加其他收入失败", e)
+            }
+        }
+    }
+
 
 
 
@@ -171,6 +205,20 @@ class SimpleHomeViewModel(private val repository: SimpleFinancialRepository) : V
 
     fun getOtherIncomeRecords(): List<IncomeRecord> {
         return repository.getOtherIncomeRecords(_currentYear.value, _currentMonth.value)
+    }
+
+    /**
+     * 获取指定日期的支出记录
+     */
+    fun getExpenseRecordsForDate(year: Int, month: Int): List<ExpenseRecord> {
+        return repository.getExpenseRecords(year, month)
+    }
+
+    /**
+     * 获取指定日期的收入记录
+     */
+    fun getOtherIncomeRecordsForDate(year: Int, month: Int): List<IncomeRecord> {
+        return repository.getOtherIncomeRecords(year, month)
     }
 
     fun deleteExpenseRecord(recordId: Long) {
@@ -191,6 +239,38 @@ class SimpleHomeViewModel(private val repository: SimpleFinancialRepository) : V
             try {
                 withContext(Dispatchers.Default) {
                     repository.deleteOtherIncomeRecord(_currentYear.value, _currentMonth.value, recordId)
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "删除收入记录失败: ${e.message}"
+                android.util.Log.e("SimpleHomeViewModel", "删除收入失败", e)
+            }
+        }
+    }
+
+    /**
+     * 删除指定日期的支出记录
+     */
+    fun deleteExpenseRecordForDate(year: Int, month: Int, recordId: Long) {
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.Default) {
+                    repository.deleteExpenseRecord(year, month, recordId)
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "删除支出记录失败: ${e.message}"
+                android.util.Log.e("SimpleHomeViewModel", "删除支出失败", e)
+            }
+        }
+    }
+
+    /**
+     * 删除指定日期的收入记录
+     */
+    fun deleteOtherIncomeRecordForDate(year: Int, month: Int, recordId: Long) {
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.Default) {
+                    repository.deleteOtherIncomeRecord(year, month, recordId)
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "删除收入记录失败: ${e.message}"
