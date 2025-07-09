@@ -61,6 +61,11 @@ class HomeFragment : Fragment() {
             viewModel.toggleSalaryDetailsExpanded()
         }
 
+        // 设置社保&公积金展开按钮
+        binding.llSocialInsuranceHeader.setOnClickListener {
+            toggleSocialInsuranceDetails()
+        }
+
         binding.btnAddExpense.setOnClickListener {
             showAddExpenseDialog()
         }
@@ -126,6 +131,7 @@ class HomeFragment : Fragment() {
         if (financialData == null) {
             // 显示默认值或提示用户设置工资
             binding.tvSalary.text = "税前工资：请先设置工资"
+            binding.tvSocialInsuranceAndHousingFund.text = "社保&公积金：--"
             binding.tvSocialInsurance.text = "社保缴纳：--"
             binding.tvHousingFund.text = "公积金：--"
             binding.tvTax.text = "个人所得税：--"
@@ -133,8 +139,12 @@ class HomeFragment : Fragment() {
             return
         }
 
+        // 计算社保&公积金总额
+        val totalSocialAndHousing = financialData.socialInsurance + financialData.housingFund
+
         // 更新UI显示
         binding.tvSalary.text = "税前工资：${currencyFormat.format(financialData.grossSalary)}"
+        binding.tvSocialInsuranceAndHousingFund.text = "社保&公积金：${currencyFormat.format(totalSocialAndHousing)}"
         binding.tvSocialInsurance.text = "社保缴纳：${currencyFormat.format(financialData.socialInsurance)}"
         binding.tvHousingFund.text = "公积金：${currencyFormat.format(financialData.housingFund)}"
         binding.tvTax.text = "个人所得税：${currencyFormat.format(financialData.tax)}"
@@ -149,7 +159,23 @@ class HomeFragment : Fragment() {
         binding.tvNetBalance.text = "月度结余：${currencyFormat.format(netBalance)}"
     }
 
+    /**
+     * 切换社保&公积金详情的展开/收起状态
+     */
+    private fun toggleSocialInsuranceDetails() {
+        val detailsLayout = binding.llSocialInsuranceDetails
+        val expandIcon = binding.ivSocialInsuranceExpand
 
+        if (detailsLayout.visibility == View.GONE) {
+            // 展开
+            detailsLayout.visibility = View.VISIBLE
+            expandIcon.animate().rotation(180f).setDuration(200).start()
+        } else {
+            // 收起
+            detailsLayout.visibility = View.GONE
+            expandIcon.animate().rotation(0f).setDuration(200).start()
+        }
+    }
 
     private fun showAddExpenseDialog() {
         val dialogBinding = DialogAddExpenseBinding.inflate(layoutInflater)

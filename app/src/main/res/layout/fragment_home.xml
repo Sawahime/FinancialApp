@@ -73,19 +73,69 @@
                     android:layout_marginBottom="4dp"
                     android:visibility="gone" />
 
-                <TextView
-                    android:id="@+id/tvSocialInsurance"
-                    style="@style/NegativeAmountStyle"
+                <!-- 社保&公积金合并显示 -->
+                <LinearLayout
+                    android:id="@+id/llSocialInsuranceAndHousingFund"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="社保缴纳：0元"/>
+                    android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/tvHousingFund"
-                    style="@style/NegativeAmountStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="公积金：0元"/>
+                    <LinearLayout
+                        android:id="@+id/llSocialInsuranceHeader"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground">
+
+                        <TextView
+                            android:id="@+id/tvSocialInsuranceAndHousingFund"
+                            style="@style/NegativeAmountStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="社保&amp;公积金：0元"/>
+
+                        <ImageView
+                            android:id="@+id/ivSocialInsuranceExpand"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_expand_more"
+                            android:contentDescription="展开社保公积金详情" />
+
+                    </LinearLayout>
+
+                    <!-- 详细信息，默认隐藏 -->
+                    <LinearLayout
+                        android:id="@+id/llSocialInsuranceDetails"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/tvSocialInsurance"
+                            style="@style/NegativeAmountStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="社保缴纳：0元"
+                            android:textSize="14sp"/>
+
+                        <TextView
+                            android:id="@+id/tvHousingFund"
+                            style="@style/NegativeAmountStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="公积金：0元"
+                            android:textSize="14sp"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvTax"
@@ -128,7 +178,7 @@
                     style="@style/SectionTitleStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="📊 本月记账"
+                    android:text="💰 生活收支"
                     android:layout_marginTop="0dp"/>
 
                 <TextView
