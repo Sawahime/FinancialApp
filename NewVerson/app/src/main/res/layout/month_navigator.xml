@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="16dp">
+
+    <!-- Pre month button -->
+    <ImageButton
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/month_bar_default_pre_month_btn_contentDescription"
+        android:src="@drawable/ic_month_bar_btn_pre_month" />
+
+    <!-- Year-Month text -->
+    <TextView
+        android:id="@+id/tvCurrentMonth"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/month_bar_default_year_month_text"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <!-- Next month button -->
+    <ImageButton
+        android:id="@+id/btnNextMonth"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/month_bar_default_next_month_btn_contentDescription"
+        android:src="@drawable/ic_month_bar_btn_next_month" />
+</LinearLayout>
