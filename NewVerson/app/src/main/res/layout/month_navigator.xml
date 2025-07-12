@@ -8,15 +8,16 @@
 
     <!-- Pre month button -->
     <ImageButton
+        android:id="@+id/btnPrevMonth"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/month_bar_default_pre_month_btn_contentDescription"
-        android:src="@drawable/ic_month_bar_btn_pre_month" />
+        android:src="@drawable/ic_month_bar_btn_prev_month" />
 
     <!-- Year-Month text -->
     <TextView
-        android:id="@+id/tvCurrentMonth"
+        android:id="@+id/tvCurrentDate"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
