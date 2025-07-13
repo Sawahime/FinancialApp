@@ -22,6 +22,8 @@ class FinancialFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // 获取Activity的ViewModel
+        // requireActivity() 返回的是宿主 MainActivity
+        // 所以 ViewModelProvider 返回的 SharedViewModel 实例和 MainActivity 里的那个是同一个
         sharedViewModel = ViewModelProvider(requireActivity()).get(SharedViewModel::class.java)
 
         // viewLifecycleOwner:
