@@ -5,16 +5,37 @@
     android:layout_height="match_parent"
     tools:context=".SettingsFragment">
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="hello settings fragment" />
+        android:orientation="vertical"
+        android:padding="16dp"
+        tools:context=".SettingsFragment"
+        tools:ignore="UselessParent">
 
-    <Button
-        android:id="@+id/btnSave"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/save_settings"
-        android:layout_marginTop="16dp" />
+        <!-- 工资输入标题 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="本月工资："
+            android:textSize="18sp" />
+
+        <!-- 工资输入框 -->
+        <EditText
+            android:id="@+id/etSalary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:inputType="numberDecimal" />
+
+        <!-- 保存按钮 -->
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/save_settings" />
+
+    </LinearLayout>
 
 </FrameLayout>

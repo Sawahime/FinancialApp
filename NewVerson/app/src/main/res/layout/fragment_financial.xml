@@ -6,8 +6,10 @@
     tools:context=".FinancialFragment">
 
     <TextView
+        android:id="@+id/tvSalary"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="hello financial fragment" />
+        android:textSize="18sp"
+        android:text="本月工资：未设置" />
 
 </FrameLayout>
