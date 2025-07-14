@@ -1,6 +1,7 @@
 package com.example.financialapp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.EditText
 import android.widget.ImageButton
@@ -43,6 +44,8 @@ class MainActivity : AppCompatActivity() {
         val tvDate = findViewById<TextView>(R.id.tvCurrentDate)
         val (year, month) = dateNavigator.getCurrYearMonthPair()
         sharedViewModel.updateDate(year, month)
+
+        Log.d("MainActivity", "SharedViewModel初始化完成")
     }
 
     private fun initDateNavigator() {
@@ -70,6 +73,8 @@ class MainActivity : AppCompatActivity() {
             dateNavigator.nextMonth()
             updateDateNavigatorTextAndSharedViewModel()
         }
+
+        Log.d("MainActivity", "DateNavigator初始化完成")
     }
 
     private fun initBottomNavigator() {
@@ -92,9 +97,10 @@ class MainActivity : AppCompatActivity() {
         // 初始默认页面
         bottomNavigator.selectedItemId = R.id.bottom_nav_menu_financial
         switchFragment(financialFragment)
+
+        Log.d("MainActivity", "BottomNavigator初始化完成")
     }
 
-    
     private fun updateDateNavigatorTextAndSharedViewModel() {
         val tvDate = findViewById<TextView>(R.id.tvCurrentDate)
         val (year, month) = dateNavigator.getCurrYearMonthPair()

@@ -25,6 +25,8 @@ class FinancialFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.d("Financial", "进入Financial页面")
+
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_financial, container, false)
 
@@ -34,21 +36,23 @@ class FinancialFragment : Fragment() {
         sharedViewModel = ViewModelProvider(requireActivity()).get(SharedViewModel::class.java)
 
         sharedPrefs = requireContext().getSharedPreferences("financial_data", Context.MODE_PRIVATE)
+        // 开发阶段：需要时使用以下代码清空旧数据
+//        sharedPrefs.edit { clear() }
+//        Log.d("Financial", "已清除所有SharedPreferences数据")
 
         // viewLifecycleOwner:
         //      Fragment 的生命周期Owner
         //      作用：确保只在Fragment的生命周期Owner处于活跃状态时接收数据更新
         sharedViewModel.yearMonth.observe(viewLifecycleOwner) { (year, month) ->
             Log.d("Financial", "dateUpdate: $year-$month")
+            val tvSalary = view.findViewById<TextView>(R.id.tvSalary)
 
             val yearMonth = "${year}-${month.toString().padStart(2, '0')}"
-            val salary = sharedPrefs.getInt(yearMonth, 0)
-
-            val tvSalary = view.findViewById<TextView>(R.id.tvSalary)
-            tvSalary.text = if (salary > 0) {
-                "本月工资：¥$salary"
-            } else {
-                "本月工资：未设置"
+            val json = sharedPrefs.getString(yearMonth, null)
+            FinanceData.fromJson(json)?.let { data ->
+                tvSalary.text = "本月工资: ${data.salary}元"
+            } ?: run {
+                tvSalary.text = "本月工资: 未设置"
             }
         }
 

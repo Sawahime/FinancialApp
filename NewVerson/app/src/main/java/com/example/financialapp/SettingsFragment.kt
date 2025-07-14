@@ -44,11 +44,13 @@ class SettingsFragment : Fragment() {
         // 保存按钮点击事件
         btnSaveSettings.setOnClickListener {
             val etSalary = view.findViewById<EditText>(R.id.etSalary)
-
             val sharedPrefsKey = "${this.year}-${this.month.toString().padStart(2, '0')}" ?: ""
-            val salary = etSalary.text.toString().toIntOrNull() ?: 0
+
+            val data = FinanceData(
+                salary = etSalary.text.toString().toIntOrNull() ?: 0
+            )
             sharedPrefs.edit {
-                putInt(sharedPrefsKey, salary)
+                putString(sharedPrefsKey, data.toJson())
             }
 
             Toast.makeText(context, "设置保存成功", Toast.LENGTH_SHORT).show()
@@ -59,11 +61,11 @@ class SettingsFragment : Fragment() {
 
     private fun flushSettings(view: View) {
         val currentYearMonth = "${this.year}-${this.month.toString().padStart(2, '0')}" ?: ""
-        val savedSalary = sharedPrefs.getInt(currentYearMonth, -1)
         val etSalary = view.findViewById<EditText>(R.id.etSalary)
-        if (savedSalary >= 0) {
-            etSalary.setText(savedSalary.toString())
-        } else {
+        val json = sharedPrefs.getString(currentYearMonth, null)
+        FinanceData.fromJson(json)?.let { data ->
+            etSalary.setText(data.salary.toString())
+        } ?: run {
             etSalary.setText("")
         }
     }
