@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 
@@ -37,8 +38,10 @@ class FinancialFragment : Fragment() {
 
         sharedPrefs = requireContext().getSharedPreferences("financial_data", Context.MODE_PRIVATE)
         // 开发阶段：需要时使用以下代码清空旧数据
-//        sharedPrefs.edit { clear() }
-//        Log.d("Financial", "已清除所有SharedPreferences数据")
+        if (false) {
+            sharedPrefs.edit { clear() }
+            Log.d("Financial", "已清除所有SharedPreferences数据")
+        }
 
         // viewLifecycleOwner:
         //      Fragment 的生命周期Owner
