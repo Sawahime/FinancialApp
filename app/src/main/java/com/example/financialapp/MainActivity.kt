@@ -10,7 +10,9 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {
+    // lateinit表示延迟初始化，告诉编译器这个变量会在稍后初始化
     private lateinit var binding: ActivityMainBinding
+    // 每次访问application时，都会调用getApplication()获取当前应用的Application对象，并将其转换为FinancialApplication类型"
     private val application get() = getApplication() as FinancialApplication
 
     // 当前显示的年月
@@ -92,7 +94,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateMonthDisplay() {
-        binding.tvCurrentMonth.text = "${currentYear}年${currentMonth}月"
+        binding.tvCurrentMonth.text = "${currentYear}年 ${currentMonth}月"
     }
 
     private fun notifyFragmentsMonthChanged() {
