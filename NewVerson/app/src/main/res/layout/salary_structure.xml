@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- 标题 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="工资结构"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <!-- 工资项列表容器 -->
+    <LinearLayout
+        android:id="@+id/salary_items_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp">
+
+        <!-- 工资项由用户动态添加 -->
+
+    </LinearLayout>
+
+    <!-- 添加工资项按钮 -->
+    <Button
+        android:id="@+id/btn_add_salary_item"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="添加工资项"
+        android:backgroundTint="#FF6200EE"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>

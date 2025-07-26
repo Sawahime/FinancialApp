@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/salary_items"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginBottom="8dp"
+    android:gravity="center_vertical|end">
+
+    <EditText
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:hint="工资类型"
+        android:inputType="text" />
+
+    <EditText
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:hint="金额"
+        android:inputType="numberDecimal" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="纳税"
+        android:buttonTint="#F44336" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="参保"
+        android:buttonTint="#F44336" />
+
+    <!-- 删除工资项按钮 -->
+    <ImageButton
+        android:id="@+id/btn_delete_salary_items"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="TODO"
+        android:src="@drawable/ic_trash_can"
+        android:background="@android:color/transparent" />
+
+</LinearLayout>
