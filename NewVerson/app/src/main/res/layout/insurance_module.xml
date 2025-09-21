@@ -32,6 +32,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="社保比例(个人部分)："
+                android:tag="personal_social"
                 android:textSize="16sp" />
 
             <EditText
@@ -54,6 +55,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="社保比例(公司部分)："
+                android:tag="company_social"
                 android:textSize="16sp" />
 
             <EditText
@@ -76,6 +78,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="公积金比例(个人部分)："
+                android:tag="personal_housing"
                 android:textSize="16sp" />
 
             <EditText
@@ -98,6 +101,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="公积金比例(公司部分)："
+                android:tag="company_housing"
                 android:textSize="16sp" />
 
             <EditText

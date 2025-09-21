@@ -110,7 +110,7 @@ class SettingsFragment : Fragment() {
             val typeTextView = insuranceItem.getChildAt(0) as TextView
             val valueEditText = insuranceItem.getChildAt(1) as EditText
 
-            val type = typeTextView.text.toString()
+            val type = typeTextView.tag.toString()
             val value = valueEditText.text.toString()
 
             val mutableMap: MutableMap<String, Any> = mutableMapOf(
@@ -121,15 +121,7 @@ class SettingsFragment : Fragment() {
             insuranceList.add(mutableMap)
         }
 
-        // 计算本月总收入
-        val currentMonthTotal = salaryList.sumOf {
-            (it["amount"] as? String)?.toDoubleOrNull() ?: 0.0
-        }
-        val currentMonthInsuranceRate = insuranceList.sumOf {
-            (it["value"] as? String)?.toDoubleOrNull() ?: 0.0
-        }
-
-        val bManual = true
+        val bManual = true// 暂时没什么用，只是用来标记这份数据是手动设置的。
         // 将数据存入有序Map
         settingsData["${year}-${month}"] = mutableMapOf(
             "salaryList" to salaryList,
@@ -221,11 +213,11 @@ class SettingsFragment : Fragment() {
 
             // 计算当月社保公积金个人部分扣除
             val personalInsuranceRate = insuranceList.find {
-                it["type"]?.toString() == "社保比例(个人部分)："
+                it["type"]?.toString() == "personal_social"
             }?.get("value")?.toString()?.toDoubleOrNull() ?: 0.0
 
             val personalHousingFundRate = insuranceList.find {
-                it["type"]?.toString() == "公积金比例(个人部分)："
+                it["type"]?.toString() == "personal_housing"
             }?.get("value")?.toString()?.toDoubleOrNull() ?: 0.0
 
             // 计算社保公积金基数（应税且参保的收入）
@@ -255,18 +247,20 @@ class SettingsFragment : Fragment() {
             cumulativeTaxPaid = cumulativeTax
 
             Log.d("TaxCalculation", "${year}年${month}月个人所得税计算:")
-            Log.d("TaxCalculation", "  当月收入: ${"%.2f".format(taxableMonthlyIncome)}")
+            Log.d("TaxCalculation", "  本月收入: ${"%.2f".format(taxableMonthlyIncome)}")
             Log.d(
                 "TaxCalculation",
-                "  当月扣除: ${"%.2f".format(monthlyDeduction)} (社保公积金) + 5000.0 (基本减除) = ${
+                "  本月扣除: ${"%.2f".format(monthlyDeduction)} (社保公积金) + 5000.0 (基本减除) = ${
                     "%.2f".format(monthlyDeduction + basicDeduction)
                 }"
             )
+            Log.d("TaxCalculation", "  本月应缴税额: ${"%.2f".format(monthlyTax)}")
+
+            Log.d("TaxCalculation", "${year}年财务累计值:")
             Log.d("TaxCalculation", "  累计收入: ${"%.2f".format(cumulativeIncome)}")
             Log.d("TaxCalculation", "  累计扣除: ${"%.2f".format(cumulativeDeduction)}")
             Log.d("TaxCalculation", "  累计应纳税所得额: ${"%.2f".format(cumulativeTaxableIncome)}")
             Log.d("TaxCalculation", "  累计应缴税额: ${"%.2f".format(cumulativeTax)}")
-            Log.d("TaxCalculation", "  本月应缴税额: ${"%.2f".format(monthlyTax)}")
         }
     }
 
