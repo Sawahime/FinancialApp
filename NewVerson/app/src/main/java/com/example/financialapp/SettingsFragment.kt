@@ -20,7 +20,7 @@ class SettingsFragment : Fragment() {
     private lateinit var salaryItemsList: LinearLayout
     private lateinit var btnAddSalaryItem: Button
     private lateinit var insuranceItemList: LinearLayout
-    private val settingsData = TreeMap<String, MutableMap<String, Any>>()
+    private val settingsData = TreeMap<Int, MutableMap<String, Any>>()
     private var year: Int = 0
     private var month: Int = 0
 
@@ -132,15 +132,15 @@ class SettingsFragment : Fragment() {
 
         val bManual = true// 暂时没什么用，只是用来标记这份数据是手动设置的。
         // 将数据存入有序Map
-        settingsData["${year}-${month}"] = mutableMapOf(
+        settingsData[year * 12 + month] = mutableMapOf(
             "salaryList" to salaryList,
             "insuranceList" to insuranceList,
             "bManual" to bManual
         )
 
         // 打印所有存储的数据
-        settingsData.forEach { (date, data) ->
-            Log.d("SettingsData", "Date: $date")
+        settingsData.forEach { (totalMonth, data) ->
+            Log.d("SettingsData", "Date: ${(totalMonth - 1) / 12}-${(totalMonth - 1) % 12 + 1}")
             (data["salaryList"] as? List<*>)?.forEachIndexed { index, item ->
                 Log.d("SettingsData", "Salary[$index]: $item")
             }
@@ -161,7 +161,8 @@ class SettingsFragment : Fragment() {
             valueEditText.text.clear()
         }
 
-        val currentData = settingsData["${year}-${month}"] as? Map<*, *> ?: return
+        val currentData =
+            settingsData[year * 12 + month] as? Map<*, *> ?: return
 
         val salaryList = currentData["salaryList"] as? List<Map<String, Any>> ?: return
         // 创建相应数量的工资项标签
@@ -192,18 +193,24 @@ class SettingsFragment : Fragment() {
     }
 
     private fun calTax(year: Int) {
-        val thisYearData = settingsData.filterKeys { key ->
-            key.startsWith("$year")
+        val thisYearData = settingsData.filterKeys { total ->
+            (total - 1) / 12 == year
         }
-        Log.d("SettingsData", "$year has following months data: ")
 
-        // 累计收入、累计扣除、累计已缴税额
+        // 累计收入
         var cumulativeIncome = 0.0
+        // 累计扣除（这部分不用交税）
         var cumulativeDeduction = 0.0
+        // 累计已缴税额
         var cumulativeTaxPaid = 0.0
 
-        thisYearData.forEach { (date, data) ->
-            val month = date.split("-")[1].toInt()
+        // 累计应纳税所得额
+        var cumulativeTaxableIncome = 0.0
+        // 累计应缴税额
+        var cumulativeTax = 0.0
+
+        thisYearData.forEach { (totalMonth, data) ->
+            val month = (totalMonth - 1) % 12 + 1
 
             // 获取当月数据
             val salaryList =
@@ -242,14 +249,10 @@ class SettingsFragment : Fragment() {
                 insuranceBase * (personalInsuranceRate + personalHousingFundRate) / 100
             val basicDeduction = 5000.0// 个税起征点
 
-            // 累计应纳税收入
             cumulativeIncome += taxableMonthlyIncome
-            // 累计扣除（这部分不用交税）
             cumulativeDeduction += monthlyDeduction + basicDeduction
-            // 累计应纳税所得额
-            val cumulativeTaxableIncome = cumulativeIncome - cumulativeDeduction
-            // 累计应缴税额
-            val cumulativeTax = calculateTaxByThreshold(cumulativeTaxableIncome)
+            cumulativeTaxableIncome = cumulativeIncome - cumulativeDeduction
+            cumulativeTax = calculateTaxByThreshold(cumulativeTaxableIncome)
             // 本月应缴税额 = 累计应缴税额 - 累计已缴税额
             val monthlyTax = cumulativeTax - cumulativeTaxPaid
             // 更新累计已缴税额
@@ -264,17 +267,17 @@ class SettingsFragment : Fragment() {
                 }"
             )
             Log.d("TaxCalculation", "  本月应缴税额: ${"%.2f".format(monthlyTax)}")
-
-            Log.d("TaxCalculation", "${year}年财务累计值:")
-            Log.d("TaxCalculation", "  累计收入: ${"%.2f".format(cumulativeIncome)}")
-            Log.d("TaxCalculation", "  累计扣除: ${"%.2f".format(cumulativeDeduction)}")
-            Log.d("TaxCalculation", "  累计应纳税所得额: ${"%.2f".format(cumulativeTaxableIncome)}")
-            Log.d("TaxCalculation", "  累计应缴税额: ${"%.2f".format(cumulativeTax)}")
         }
+        Log.d("TaxCalculation", "${year}年财务累计值:")
+        Log.d("TaxCalculation", "  累计收入: ${"%.2f".format(cumulativeIncome)}")
+        Log.d("TaxCalculation", "  累计扣除: ${"%.2f".format(cumulativeDeduction)}")
+        Log.d("TaxCalculation", "  累计应纳税所得额: ${"%.2f".format(cumulativeTaxableIncome)}")
+        Log.d("TaxCalculation", "  累计应缴税额: ${"%.2f".format(cumulativeTax)}")
     }
 
     private fun calculateTaxByThreshold(amount: Double): Double {
         return when {
+            amount <= 0 -> 0.0
             amount <= 36000 -> amount * 0.03
             amount <= 144000 -> amount * 0.10 - 2520
             amount <= 300000 -> amount * 0.20 - 16920
