@@ -36,13 +36,22 @@ class SettingsFragment : Fragment() {
             Log.d("Settings", "dateUpdate: $year-$month")
             this.year = year
             this.month = month
-            flushSettings()
+            flushSettings(year, month)
         }
 
         initSalaryModule(view)
         initInsuranceModule(view)
 
-        // 保存按钮点击事件
+        // "获取上个月数据"按钮点击事件
+        view.findViewById<Button>(R.id.btn_get_prev_data).setOnClickListener {
+            if (this.month == 1) {
+                flushSettings(this.year - 1, 12)
+            } else {
+                flushSettings(this.year, this.month - 1)
+            }
+            Log.d("Settings", "成功获取上个月数据")
+        }
+        // "保存"按钮点击事件
         view.findViewById<Button>(R.id.btn_save_settings).setOnClickListener {
             saveSettings()
             Log.d("Settings", "保存成功")
@@ -143,7 +152,7 @@ class SettingsFragment : Fragment() {
         calTax(year)
     }
 
-    private fun flushSettings() {
+    private fun flushSettings(year: Int, month: Int) {
         // 清空页面内容
         salaryItemsList.removeAllViews()
         for (i in 0 until insuranceItemList.childCount) {
@@ -264,9 +273,6 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    /**
-     * 根据累计应纳税所得额计算应缴税额(适用税率表)
-     */
     private fun calculateTaxByThreshold(amount: Double): Double {
         return when {
             amount <= 36000 -> amount * 0.03
