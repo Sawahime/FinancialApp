@@ -121,6 +121,14 @@ class SettingsFragment : Fragment() {
             insuranceList.add(mutableMap)
         }
 
+        // 计算本月总收入
+        val currentMonthTotal = salaryList.sumOf {
+            (it["amount"] as? String)?.toDoubleOrNull() ?: 0.0
+        }
+        val currentMonthInsuranceRate = insuranceList.sumOf {
+            (it["value"] as? String)?.toDoubleOrNull() ?: 0.0
+        }
+
         val bManual = true
         // 将数据存入有序Map
         settingsData["${year}-${month}"] = mutableMapOf(
@@ -139,8 +147,10 @@ class SettingsFragment : Fragment() {
                 Log.d("SettingsData", "Insurance[$index]: $item")
             }
         }
+
+        calTax(year)
     }
-    
+
     private fun flushSettings() {
         // 清空页面内容
         salaryItemsList.removeAllViews()
@@ -177,6 +187,101 @@ class SettingsFragment : Fragment() {
 
             val insuranceData = insuranceList[i]
             valueEditText.setText(insuranceData["value"]?.toString() ?: "0")
+        }
+    }
+
+    private fun calTax(year: Int) {
+        val thisYearData = settingsData.filterKeys { key ->
+            key.startsWith("$year")
+        }
+        Log.d("SettingsData", "$year has following months data: ")
+
+        // 累计收入、累计扣除、累计已缴税额
+        var cumulativeIncome = 0.0
+        var cumulativeDeduction = 0.0
+        var cumulativeTaxPaid = 0.0
+
+        thisYearData.forEach { (date, data) ->
+            val month = date.split("-")[1].toInt()
+
+            // 获取当月数据
+            val salaryList =
+                data["salaryList"] as? MutableList<MutableMap<String, Any>> ?: mutableListOf()
+            val insuranceList =
+                data["insuranceList"] as? MutableList<MutableMap<String, Any>> ?: mutableListOf()
+
+            // 计算当月收入（应税部分）
+            val taxableMonthlyIncome = salaryList.sumOf { item ->
+                if (item["isTaxable"] as? Boolean == true) {
+                    (item["amount"] as? Double) ?: 0.0
+                } else {
+                    0.0
+                }
+            }
+
+            // 计算当月社保公积金个人部分扣除
+            val personalInsuranceRate = insuranceList.find {
+                it["type"]?.toString() == "社保比例(个人部分)："
+            }?.get("value")?.toString()?.toDoubleOrNull() ?: 0.0
+
+            val personalHousingFundRate = insuranceList.find {
+                it["type"]?.toString() == "公积金比例(个人部分)："
+            }?.get("value")?.toString()?.toDoubleOrNull() ?: 0.0
+
+            // 计算社保公积金基数（应税且参保的收入）
+            val insuranceBase = salaryList.sumOf { item ->
+                if (item["isInsured"] as? Boolean == true) {
+                    (item["amount"] as? Double) ?: 0.0
+                } else {
+                    0.0
+                }
+            }
+
+            val monthlyDeduction =
+                insuranceBase * (personalInsuranceRate + personalHousingFundRate) / 100
+            val basicDeduction = 5000.0// 个税起征点
+
+            // 累计应纳税收入
+            cumulativeIncome += taxableMonthlyIncome
+            // 累计扣除（这部分不用交税）
+            cumulativeDeduction += monthlyDeduction + basicDeduction
+            // 累计应纳税所得额
+            val cumulativeTaxableIncome = cumulativeIncome - cumulativeDeduction
+            // 累计应缴税额
+            val cumulativeTax = calculateTaxByThreshold(cumulativeTaxableIncome)
+            // 本月应缴税额 = 累计应缴税额 - 累计已缴税额
+            val monthlyTax = cumulativeTax - cumulativeTaxPaid
+            // 更新累计已缴税额
+            cumulativeTaxPaid = cumulativeTax
+
+            Log.d("TaxCalculation", "${year}年${month}月个人所得税计算:")
+            Log.d("TaxCalculation", "  当月收入: ${"%.2f".format(taxableMonthlyIncome)}")
+            Log.d(
+                "TaxCalculation",
+                "  当月扣除: ${"%.2f".format(monthlyDeduction)} (社保公积金) + 5000.0 (基本减除) = ${
+                    "%.2f".format(monthlyDeduction + basicDeduction)
+                }"
+            )
+            Log.d("TaxCalculation", "  累计收入: ${"%.2f".format(cumulativeIncome)}")
+            Log.d("TaxCalculation", "  累计扣除: ${"%.2f".format(cumulativeDeduction)}")
+            Log.d("TaxCalculation", "  累计应纳税所得额: ${"%.2f".format(cumulativeTaxableIncome)}")
+            Log.d("TaxCalculation", "  累计应缴税额: ${"%.2f".format(cumulativeTax)}")
+            Log.d("TaxCalculation", "  本月应缴税额: ${"%.2f".format(monthlyTax)}")
+        }
+    }
+
+    /**
+     * 根据累计应纳税所得额计算应缴税额(适用税率表)
+     */
+    private fun calculateTaxByThreshold(amount: Double): Double {
+        return when {
+            amount <= 36000 -> amount * 0.03
+            amount <= 144000 -> amount * 0.10 - 2520
+            amount <= 300000 -> amount * 0.20 - 16920
+            amount <= 420000 -> amount * 0.25 - 31920
+            amount <= 660000 -> amount * 0.30 - 52920
+            amount <= 960000 -> amount * 0.35 - 85920
+            else -> amount * 0.45 - 181920
         }
     }
 }
