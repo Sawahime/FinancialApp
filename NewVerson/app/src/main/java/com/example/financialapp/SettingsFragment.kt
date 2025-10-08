@@ -13,6 +13,11 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.room.Room
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.TreeMap
 
 class SettingsFragment : Fragment() {
@@ -21,6 +26,8 @@ class SettingsFragment : Fragment() {
     private lateinit var btnAddSalaryItem: Button
     private lateinit var insuranceItemList: LinearLayout
     private val settingsData = TreeMap<Int, MutableMap<String, Any>>()
+    private lateinit var db: AppDatabase
+    private lateinit var settingsRepo: SettingsRepository
     private var year: Int = 0
     private var month: Int = 0
 
@@ -41,6 +48,16 @@ class SettingsFragment : Fragment() {
 
         initSalaryModule(view)
         initInsuranceModule(view)
+        db = Room.databaseBuilder(requireContext(), AppDatabase::class.java, "tax_app.db").build()
+        settingsRepo = SettingsRepository(db)
+
+        lifecycleScope.launch {
+            val persisted = withContext(Dispatchers.IO) { settingsRepo.loadAllAsSettingsMap() }
+            if (persisted.isNotEmpty()) {
+                settingsData.clear()
+                settingsData.putAll(java.util.TreeMap(persisted))
+            }
+        }
 
         // "获取上个月数据"按钮点击事件
         view.findViewById<Button>(R.id.btn_get_prev_data).setOnClickListener {
@@ -146,6 +163,35 @@ class SettingsFragment : Fragment() {
             }
             (data["insuranceList"] as? List<*>)?.forEachIndexed { index, item ->
                 Log.d("SettingsData", "Insurance[$index]: $item")
+            }
+        }
+
+        val salaryEntities = salaryList.map { item ->
+            SalaryItemEntity(
+                id = 0,
+                settingsId = 0, // repository 会在 upsert 时替换为正确的 settingsId
+                type = item["type"] as? String ?: "",
+                amount = item["amount"] as? Double ?: 0.0,
+                isTaxable = item["isTaxable"] as? Boolean ?: false,
+                isInsured = item["isInsured"] as? Boolean ?: false
+            )
+        }
+        val insuranceEntities = insuranceList.map { item ->
+            InsuranceItemEntity(
+                id = 0,
+                settingsId = 0,
+                type = item["type"] as? String ?: "",
+                value = item["value"]?.toString() ?: "0"
+            )
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                settingsRepo.upsertSettings(year, month, bManual, salaryEntities, insuranceEntities)
+                // 可选：写日志或发送主线程通知
+            } catch (e: Exception) {
+                // 处理持久化失败的情况（日志/上报），UI 不阻塞
+                Log.e("Settings", "persist settings failed", e)
             }
         }
 
