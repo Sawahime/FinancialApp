@@ -48,10 +48,17 @@ class SettingsFragment : Fragment() {
 
         initSalaryModule(view)
         initInsuranceModule(view)
-        db = Room.databaseBuilder(requireContext(), AppDatabase::class.java, "tax_app.db").build()
+        db = Room.databaseBuilder(
+            requireContext(),
+            AppDatabase::class.java,
+            "FinancialApp.db"
+        ).build()
         settingsRepo = SettingsRepository(db)
 
         lifecycleScope.launch {
+            // 清空数据库（开发阶段用）
+            withContext(Dispatchers.IO) { db.clearAllTables() }
+
             val persisted = withContext(Dispatchers.IO) { settingsRepo.loadAllAsSettingsMap() }
             if (persisted.isNotEmpty()) {
                 settingsData.clear()
