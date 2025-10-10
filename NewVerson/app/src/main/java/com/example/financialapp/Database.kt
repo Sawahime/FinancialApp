@@ -74,15 +74,15 @@ data class SettingsWithItems(
 interface SettingsDao {
     @Transaction
     @Query("SELECT * FROM settings WHERE year = :year AND month = :month LIMIT 1")
-    suspend fun getSettingsByYearMonth(year: Int, month: Int): SettingsWithItems?
+    suspend fun getDataByYearMonth(year: Int, month: Int): SettingsWithItems?
 
     @Transaction
     @Query("SELECT * FROM settings WHERE year = :year")
-    suspend fun getSettingsByYear(year: Int): List<SettingsWithItems>
+    suspend fun getDataByYear(year: Int): List<SettingsWithItems>
 
     @Transaction
     @Query("SELECT * FROM settings")
-    suspend fun getAllSettingsWithItems(): List<SettingsWithItems>
+    suspend fun getAllData(): List<SettingsWithItems>
 
     @Insert
     suspend fun insertSettings(settings: SettingsEntity): Long

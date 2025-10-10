@@ -41,6 +41,18 @@ class SettingsFragment : Fragment() {
         sharedViewModel = ViewModelProvider(requireActivity()).get(SharedViewModel::class.java)
         sharedViewModel.yearMonth.observe(viewLifecycleOwner) { (year, month) ->
             Log.d("Settings", "dateUpdate: $year-$month")
+
+            if (this.year != year) {
+                lifecycleScope.launch {
+                    val persisted =
+                        withContext(Dispatchers.IO) { settingsRepo.loadSettingsAsMap(year) }
+                    if (persisted.isNotEmpty()) {
+                        settingsData.clear()
+                        settingsData.putAll(java.util.TreeMap(persisted))
+                    }
+                }
+            }
+
             this.year = year
             this.month = month
             flushSettings(year, month)
@@ -59,7 +71,8 @@ class SettingsFragment : Fragment() {
             // 清空数据库（开发阶段用）
             withContext(Dispatchers.IO) { db.clearAllTables() }
 
-            val persisted = withContext(Dispatchers.IO) { settingsRepo.loadAllAsSettingsMap() }
+            val persisted =
+                withContext(Dispatchers.IO) { settingsRepo.loadSettingsAsMap(this@SettingsFragment.year) }
             if (persisted.isNotEmpty()) {
                 settingsData.clear()
                 settingsData.putAll(java.util.TreeMap(persisted))

@@ -13,7 +13,7 @@ class SettingsRepository(private val db: AppDatabase) {
         insuranceItems: List<InsuranceItemEntity>
     ) {
         db.withTransaction {
-            val existing = dao.getSettingsByYearMonth(year, month)
+            val existing = dao.getDataByYearMonth(year, month)
             if (existing != null) {
                 val settingsId = existing.settings.id
                 dao.updateSettings(SettingsEntity(settingsId, year, month, bManual))
@@ -32,8 +32,12 @@ class SettingsRepository(private val db: AppDatabase) {
     /**
      * 把 DB 中的数据转换成与 settingsData 兼容的 Map<Int, MutableMap<String, Any>> 结构
      */
-    suspend fun loadAllAsSettingsMap(): Map<Int, MutableMap<String, Any>> {
-        val list = dao.getAllSettingsWithItems()
+    suspend fun loadSettingsAsMap(year: Int? = null): Map<Int, MutableMap<String, Any>> {
+        val list = when {
+            year != null -> dao.getDataByYear(year)
+            else -> dao.getAllData()
+        }
+
         val result = mutableMapOf<Int, MutableMap<String, Any>>()
         list.forEach { swi ->
             val key = swi.settings.year * 12 + swi.settings.month
@@ -57,6 +61,42 @@ class SettingsRepository(private val db: AppDatabase) {
                 "bManual" to swi.settings.bManual
             )
         }
+
+        if (year != null) {
+            loadDataByYearMonth(year - 1, 12)?.let {
+                result[(year - 1) * 12 + 12] = it
+            }
+        }
+
         return result
+    }
+
+    suspend fun loadDataByYearMonth(year: Int, month: Int): MutableMap<String, Any>? {
+        val singleMonthData = dao.getDataByYearMonth(year, month);
+        if (singleMonthData == null) {
+            return null
+        }
+
+        val salaryList = singleMonthData.salaryList.map { item ->
+            mutableMapOf<String, Any>(
+                "type" to item.type,
+                "amount" to item.amount,
+                "isTaxable" to item.isTaxable,
+                "isInsured" to item.isInsured
+            )
+        }.toMutableList<MutableMap<String, Any>>()
+
+        val insuranceList = singleMonthData.insuranceList.map { item ->
+            mutableMapOf<String, Any>(
+                "type" to item.type,
+                "value" to item.value
+            )
+        }.toMutableList<MutableMap<String, Any>>()
+
+        return mutableMapOf(
+            "salaryList" to salaryList,
+            "insuranceList" to insuranceList,
+            "bManual" to singleMonthData.settings.bManual
+        )
     }
 }
