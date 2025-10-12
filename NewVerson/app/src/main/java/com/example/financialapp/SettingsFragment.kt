@@ -11,6 +11,7 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -20,16 +21,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.TreeMap
 
+
 class SettingsFragment : Fragment() {
     private lateinit var sharedViewModel: SharedViewModel
+    private var year: Int = 0
+    private var month: Int = 0
     private lateinit var salaryItemsList: LinearLayout
     private lateinit var btnAddSalaryItem: Button
     private lateinit var insuranceItemList: LinearLayout
-    private val settingsData = TreeMap<Int, MutableMap<String, Any>>()
+    private val financialDataBuffer = TreeMap<Int, MutableMap<String, Any>>()
     private lateinit var db: AppDatabase
-    private lateinit var settingsRepo: SettingsRepository
-    private var year: Int = 0
-    private var month: Int = 0
+    private lateinit var financialDataRepo: FinancialDataRepository
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -45,10 +47,10 @@ class SettingsFragment : Fragment() {
             if (this.year != year) {
                 lifecycleScope.launch {
                     val persisted =
-                        withContext(Dispatchers.IO) { settingsRepo.loadSettingsAsMap(year) }
+                        withContext(Dispatchers.IO) { financialDataRepo.loadData(year) }
                     if (persisted.isNotEmpty()) {
-                        settingsData.clear()
-                        settingsData.putAll(java.util.TreeMap(persisted))
+                        financialDataBuffer.clear()
+                        financialDataBuffer.putAll(java.util.TreeMap(persisted))
                     }
                 }
             }
@@ -65,17 +67,18 @@ class SettingsFragment : Fragment() {
             AppDatabase::class.java,
             "FinancialApp.db"
         ).build()
-        settingsRepo = SettingsRepository(db)
+        financialDataRepo = FinancialDataRepository(db)
 
         lifecycleScope.launch {
             // 清空数据库（开发阶段用）
             withContext(Dispatchers.IO) { db.clearAllTables() }
 
-            val persisted =
-                withContext(Dispatchers.IO) { settingsRepo.loadSettingsAsMap(this@SettingsFragment.year) }
+            val persisted = withContext(Dispatchers.IO) {
+                financialDataRepo.loadData(this@SettingsFragment.year)
+            }
             if (persisted.isNotEmpty()) {
-                settingsData.clear()
-                settingsData.putAll(java.util.TreeMap(persisted))
+                financialDataBuffer.clear()
+                financialDataBuffer.putAll(java.util.TreeMap(persisted))
             }
         }
 
@@ -91,7 +94,7 @@ class SettingsFragment : Fragment() {
         // "保存"按钮点击事件
         view.findViewById<Button>(R.id.btn_save_settings).setOnClickListener {
             saveSettings()
-            Log.d("Settings", "保存成功")
+            Toast.makeText(requireContext(), "保存成功", Toast.LENGTH_SHORT).show()
         }
 
         return view
@@ -169,14 +172,14 @@ class SettingsFragment : Fragment() {
 
         val bManual = true// 暂时没什么用，只是用来标记这份数据是手动设置的。
         // 将数据存入有序Map
-        settingsData[year * 12 + month] = mutableMapOf(
+        financialDataBuffer[year * 12 + month] = mutableMapOf(
             "salaryList" to salaryList,
             "insuranceList" to insuranceList,
             "bManual" to bManual
         )
 
         // 打印所有存储的数据
-        settingsData.forEach { (totalMonth, data) ->
+        financialDataBuffer.forEach { (totalMonth, data) ->
             Log.d("SettingsData", "Date: ${(totalMonth - 1) / 12}-${(totalMonth - 1) % 12 + 1}")
             (data["salaryList"] as? List<*>)?.forEachIndexed { index, item ->
                 Log.d("SettingsData", "Salary[$index]: $item")
@@ -189,7 +192,7 @@ class SettingsFragment : Fragment() {
         val salaryEntities = salaryList.map { item ->
             SalaryItemEntity(
                 id = 0,
-                settingsId = 0, // repository 会在 upsert 时替换为正确的 settingsId
+                financialDataTableId = 0, // repository 会在 upsert 时替换为正确的 settingsId
                 type = item["type"] as? String ?: "",
                 amount = item["amount"] as? Double ?: 0.0,
                 isTaxable = item["isTaxable"] as? Boolean ?: false,
@@ -199,7 +202,7 @@ class SettingsFragment : Fragment() {
         val insuranceEntities = insuranceList.map { item ->
             InsuranceItemEntity(
                 id = 0,
-                settingsId = 0,
+                financialDataTableId = 0,
                 type = item["type"] as? String ?: "",
                 value = item["value"]?.toString() ?: "0"
             )
@@ -207,7 +210,13 @@ class SettingsFragment : Fragment() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                settingsRepo.upsertSettings(year, month, bManual, salaryEntities, insuranceEntities)
+                financialDataRepo.upsertData(
+                    year,
+                    month,
+                    bManual,
+                    salaryEntities,
+                    insuranceEntities
+                )
                 // 可选：写日志或发送主线程通知
             } catch (e: Exception) {
                 // 处理持久化失败的情况（日志/上报），UI 不阻塞
@@ -228,7 +237,7 @@ class SettingsFragment : Fragment() {
         }
 
         val currentData =
-            settingsData[year * 12 + month] as? Map<*, *> ?: return
+            financialDataBuffer[year * 12 + month] as? Map<*, *> ?: return
 
         val salaryList = currentData["salaryList"] as? List<Map<String, Any>> ?: return
         // 创建相应数量的工资项标签
@@ -259,7 +268,7 @@ class SettingsFragment : Fragment() {
     }
 
     private fun calTax(year: Int) {
-        val thisYearData = settingsData.filterKeys { total ->
+        val thisYearData = financialDataBuffer.filterKeys { total ->
             (total - 1) / 12 == year
         }
 

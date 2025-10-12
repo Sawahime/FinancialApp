@@ -2,10 +2,10 @@ package com.example.financialapp
 
 import androidx.room.withTransaction
 
-class SettingsRepository(private val db: AppDatabase) {
-    private val dao = db.settingsDao()
+class FinancialDataRepository(private val db: AppDatabase) {
+    private val dao = db.financialDataDao()
 
-    suspend fun upsertSettings(
+    suspend fun upsertData(
         year: Int,
         month: Int,
         bManual: Boolean,
@@ -15,24 +15,21 @@ class SettingsRepository(private val db: AppDatabase) {
         db.withTransaction {
             val existing = dao.getDataByYearMonth(year, month)
             if (existing != null) {
-                val settingsId = existing.settings.id
-                dao.updateSettings(SettingsEntity(settingsId, year, month, bManual))
-                dao.deleteSalaryBySettings(settingsId)
-                dao.deleteInsuranceBySettings(settingsId)
-                dao.insertSalaryItems(salaryItems.map { it.copy(settingsId = settingsId) })
-                dao.insertInsuranceItems(insuranceItems.map { it.copy(settingsId = settingsId) })
+                val dataId = existing.financialDataEntity.id
+                dao.updateData(FinancialDataEntity(dataId, year, month, bManual))
+                dao.deleteSalaryByDataId(dataId)
+                dao.deleteInsuranceByDataId(dataId)
+                dao.insertSalaryItems(salaryItems.map { it.copy(financialDataTableId = dataId) })
+                dao.insertInsuranceItems(insuranceItems.map { it.copy(financialDataTableId = dataId) })
             } else {
-                val newId = dao.insertSettings(SettingsEntity(0, year, month, bManual)).toInt()
-                dao.insertSalaryItems(salaryItems.map { it.copy(settingsId = newId) })
-                dao.insertInsuranceItems(insuranceItems.map { it.copy(settingsId = newId) })
+                val newId = dao.insertData(FinancialDataEntity(0, year, month, bManual)).toInt()
+                dao.insertSalaryItems(salaryItems.map { it.copy(financialDataTableId = newId) })
+                dao.insertInsuranceItems(insuranceItems.map { it.copy(financialDataTableId = newId) })
             }
         }
     }
 
-    /**
-     * 把 DB 中的数据转换成与 settingsData 兼容的 Map<Int, MutableMap<String, Any>> 结构
-     */
-    suspend fun loadSettingsAsMap(year: Int? = null): Map<Int, MutableMap<String, Any>> {
+    suspend fun loadData(year: Int? = null): Map<Int, MutableMap<String, Any>> {
         val list = when {
             year != null -> dao.getDataByYear(year)
             else -> dao.getAllData()
@@ -40,7 +37,7 @@ class SettingsRepository(private val db: AppDatabase) {
 
         val result = mutableMapOf<Int, MutableMap<String, Any>>()
         list.forEach { swi ->
-            val key = swi.settings.year * 12 + swi.settings.month
+            val key = swi.financialDataEntity.year * 12 + swi.financialDataEntity.month
             val salaryList = swi.salaryList.map { item ->
                 mutableMapOf<String, Any>(
                     "type" to item.type,
@@ -55,10 +52,12 @@ class SettingsRepository(private val db: AppDatabase) {
                     "value" to item.value
                 )
             }.toMutableList<MutableMap<String, Any>>()
+
+            // 把 DB 中的数据转换成 Map<Int, MutableMap<String, Any>> 结构
             result[key] = mutableMapOf(
                 "salaryList" to salaryList,
                 "insuranceList" to insuranceList,
-                "bManual" to swi.settings.bManual
+                "bManual" to swi.financialDataEntity.bManual
             )
         }
 
@@ -96,7 +95,7 @@ class SettingsRepository(private val db: AppDatabase) {
         return mutableMapOf(
             "salaryList" to salaryList,
             "insuranceList" to insuranceList,
-            "bManual" to singleMonthData.settings.bManual
+            "bManual" to singleMonthData.financialDataEntity.bManual
         )
     }
 }
