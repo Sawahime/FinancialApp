@@ -1,213 +1,140 @@
 package com.example.financialapp
 
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.setupWithNavController
-import com.example.financialapp.databinding.ActivityMainBinding
-import kotlinx.coroutines.launch
-import java.util.Calendar
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
-    private val application get() = getApplication() as FinancialApplication
-
-    // 当前显示的年月
-    private var currentYear = Calendar.getInstance().get(Calendar.YEAR)
-    private var currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1
+    private val dateNavigator = DateNavigator()
+    private val financialFragment = FinancialFragment()
+    private val settingsFragment = SettingsFragment()
+    private lateinit var sharedViewModel: SharedViewModel// 用于将日期更新同步到各个页面
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        try {
-            binding = ActivityMainBinding.inflate(layoutInflater)
-            setContentView(binding.root)
-
-            val navHostFragment = supportFragmentManager
-                .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-            val navController = navHostFragment.navController
-
-            binding.bottomNavigation.setupWithNavController(navController)
-
-            // 监听导航变化，当切换到设置页面时通知月份变更
-            navController.addOnDestinationChangedListener { _, destination, _ ->
-                android.util.Log.d("MainActivity", "导航到: ${destination.label}")
-                // 延迟通知，确保Fragment已经创建
-                binding.root.post {
-                    notifyFragmentsMonthChanged()
-                }
-            }
-
-            setupMonthNavigation()
-            updateMonthDisplay()
-
-            // 初始化当前月份到Repository
-            notifyFragmentsMonthChanged()
-
-            android.util.Log.d("MainActivity", "应用启动成功")
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "应用启动失败", e)
-            throw e
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_main)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
         }
+
+        // 初始化各个组件
+        initSharedViewModel()
+        initDateNavigator()
+        initBottomNavigator()
     }
 
-    private fun setupMonthNavigation() {
-        binding.btnPreviousMonth.setOnClickListener {
-            goToPreviousMonth()
-        }
+    private fun initSharedViewModel() {
+        sharedViewModel = ViewModelProvider(this).get(SharedViewModel::class.java)
 
-        binding.btnNextMonth.setOnClickListener {
-            goToNextMonth()
-        }
+        val tvDate = findViewById<TextView>(R.id.tvCurrentDate)
+        val (year, month) = dateNavigator.getCurrYearMonthPair()
+        sharedViewModel.updateDate(year, month)
+    }
 
-        // 月份区域点击事件
-        binding.tvCurrentMonth.setOnClickListener {
+    private fun initDateNavigator() {
+        val tvDate = findViewById<TextView>(R.id.tvCurrentDate)
+        val btnPrev = findViewById<ImageButton>(R.id.btnPrevMonth)
+        val btnNext = findViewById<ImageButton>(R.id.btnNextMonth)
+
+        // 更新月份导航栏文字
+        val (year, month) = dateNavigator.getCurrYearMonthPair()
+        tvDate.text = getString(R.string.date_format, year, month)
+
+        // 点击月份文字弹出月历选择器
+        tvDate.setOnClickListener {
             showYearMonthInputDialog()
         }
+
+        // 上个月按钮点击
+        btnPrev.setOnClickListener {
+            dateNavigator.prevMonth()
+            updateDateNavigatorTextAndSharedViewModel()
+        }
+
+        // 下个月按钮点击
+        btnNext.setOnClickListener {
+            dateNavigator.nextMonth()
+            updateDateNavigatorTextAndSharedViewModel()
+        }
     }
 
-    private fun goToPreviousMonth() {
-        val calendar = Calendar.getInstance().apply {
-            set(currentYear, currentMonth - 1, 1)
-            add(Calendar.MONTH, -1)
-        }
-        currentYear = calendar.get(Calendar.YEAR)
-        currentMonth = calendar.get(Calendar.MONTH) + 1
-
-        updateMonthDisplay()
-        notifyFragmentsMonthChanged()
-    }
-
-    private fun goToNextMonth() {
-        val calendar = Calendar.getInstance().apply {
-            set(currentYear, currentMonth - 1, 1)
-            add(Calendar.MONTH, 1)
-        }
-        currentYear = calendar.get(Calendar.YEAR)
-        currentMonth = calendar.get(Calendar.MONTH) + 1
-
-        updateMonthDisplay()
-        notifyFragmentsMonthChanged()
-    }
-
-    private fun updateMonthDisplay() {
-        binding.tvCurrentMonth.text = "${currentYear}年${currentMonth}月"
-    }
-
-    private fun notifyFragmentsMonthChanged() {
-        // 通知所有Fragment月份已改变
-        application.currentDisplayYear = currentYear
-        application.currentDisplayMonth = currentMonth
-
-        // 通知repository更新当前月份（这会触发财务数据重新计算）
-        application.simpleRepository.setCurrentYearMonth(currentYear, currentMonth)
-
-        // 通知当前显示的Fragment月份已变更
-        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
-        val fragments = navHostFragment?.childFragmentManager?.fragments
-
-        android.util.Log.d("MainActivity", "当前Fragment数量: ${fragments?.size}")
-        fragments?.forEach { fragment ->
-            android.util.Log.d("MainActivity", "Fragment类型: ${fragment::class.simpleName}")
-            if (fragment is SettingsFragment) {
-                fragment.onMonthChanged(currentYear, currentMonth)
-                android.util.Log.d("MainActivity", "已通知SettingsFragment月份变更")
-            }
-        }
-
-        android.util.Log.d("MainActivity", "月份切换到${currentYear}年${currentMonth}月")
-    }
-
-    fun getCurrentYear() = currentYear
-    fun getCurrentMonth() = currentMonth
-
-    /**
-     * 显示年月选择对话框
-     */
-    private fun showYearMonthInputDialog() {
-        // 创建容器布局
-        val container = android.widget.LinearLayout(this).apply {
-            orientation = android.widget.LinearLayout.VERTICAL
-            setPadding(50, 30, 50, 30)
-        }
-
-        // 年份输入
-        val yearLabel = android.widget.TextView(this).apply {
-            text = "年份："
-            textSize = 16f
-            setTypeface(null, android.graphics.Typeface.BOLD)
-        }
-        val yearEditText = android.widget.EditText(this).apply {
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER
-            setText(currentYear.toString())
-            hint = "请输入年份（1900-2100）"
-            selectAll()
-        }
-
-        // 月份输入
-        val monthLabel = android.widget.TextView(this).apply {
-            text = "月份："
-            textSize = 16f
-            setTypeface(null, android.graphics.Typeface.BOLD)
-            setPadding(0, 30, 0, 0)
-        }
-        val monthEditText = android.widget.EditText(this).apply {
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER
-            setText(currentMonth.toString())
-            hint = "请输入月份（1-12）"
-        }
-
-        container.addView(yearLabel)
-        container.addView(yearEditText)
-        container.addView(monthLabel)
-        container.addView(monthEditText)
-
-        // 显示对话框
-        android.app.AlertDialog.Builder(this)
-            .setTitle("📅 选择年月")
-            .setMessage("请输入要跳转到的年份和月份：")
-            .setView(container)
-            .setPositiveButton("确定") { _, _ ->
-                val yearText = yearEditText.text.toString()
-                val monthText = monthEditText.text.toString()
-
-                val year = yearText.toIntOrNull()
-                val month = monthText.toIntOrNull()
-
-                var hasError = false
-                var errorMessage = ""
-
-                if (year == null || year !in 1900..2100) {
-                    hasError = true
-                    errorMessage = "请输入有效的年份（1900-2100）"
-                } else if (month == null || month !in 1..12) {
-                    hasError = true
-                    errorMessage = "请输入有效的月份（1-12）"
+    private fun initBottomNavigator() {
+        val bottomNavigator = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigator.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.bottom_nav_menu_financial -> {
+                    switchFragment(financialFragment)
+                    true
                 }
 
-                if (hasError) {
-                    android.widget.Toast.makeText(this, errorMessage, android.widget.Toast.LENGTH_SHORT).show()
+                R.id.bottom_nav_menu_settings -> {
+                    switchFragment(settingsFragment)
+                    true
+                }
+
+                else -> false
+            }
+        }
+        // 初始默认页面
+        bottomNavigator.selectedItemId = R.id.bottom_nav_menu_financial
+        switchFragment(financialFragment)
+    }
+
+    
+    private fun updateDateNavigatorTextAndSharedViewModel() {
+        val tvDate = findViewById<TextView>(R.id.tvCurrentDate)
+        val (year, month) = dateNavigator.getCurrYearMonthPair()
+        tvDate.text = getString(R.string.date_format, year, month)
+        sharedViewModel.updateDate(year, month)
+    }
+
+    private fun showYearMonthInputDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_date_input, null)
+        val etYear = dialogView.findViewById<EditText>(R.id.etYear)
+        val etMonth = dialogView.findViewById<EditText>(R.id.etMonth)
+
+        // 设置当前年月为默认值
+        val (currentYear, currentMonth) = dateNavigator.getCurrYearMonthPair()
+        etYear.setText(currentYear.toString())
+        etMonth.setText(currentMonth.toString())
+
+        AlertDialog.Builder(this)
+            .setTitle("请输入目标月份")
+            .setView(dialogView)
+            .setPositiveButton("确定") { _, _ ->
+                val year = etYear.text.toString().toIntOrNull() ?: currentYear
+                val month = etMonth.text.toString().toIntOrNull() ?: currentMonth
+
+                // 验证月份范围
+                if (month in 1..12) {
+                    dateNavigator.setYearMonth(year, month)
+                    updateDateNavigatorTextAndSharedViewModel()
                 } else {
-                    currentYear = year!!
-                    currentMonth = month!!
-                    updateMonthDisplay()
-                    notifyFragmentsMonthChanged()
-                    android.util.Log.d("MainActivity", "用户手动切换到: ${year}年${month}月")
+                    Toast.makeText(this, "月份必须是1-12", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("取消", null)
             .show()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        // 确保清理资源
-        try {
-            val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-            imm?.hideSoftInputFromWindow(window.decorView.windowToken, 0)
-        } catch (e: Exception) {
-            android.util.Log.w("MainActivity", "清理输入法失败", e)
-        }
+    private fun switchFragment(fragment: Fragment) {
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.container, fragment)
+            .commit()
     }
 }

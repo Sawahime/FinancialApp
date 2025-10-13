@@ -1,305 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/md_theme_surface_variant"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_gravity=""
     tools:context=".SettingsFragment">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="match_parent"
+        tools:ignore="UselessParent">
 
-
-
-        <!-- 工资设置卡片 -->
-        <androidx.cardview.widget.CardView
-            style="@style/CardStyle"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            android:orientation="vertical"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center_horizontal"
+            tools:ignore="UselessParent">
 
-            <LinearLayout
+            <!-- 模块1：工资 -->
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_margin="8dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
 
-                <TextView
-                    style="@style/SectionTitleStyle"
+                <include
+                    layout="@layout/salary_module"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="💰 工资设置"
-                    android:layout_marginTop="0dp"/>
+                    android:layout_height="wrap_content" />
+            </androidx.cardview.widget.CardView>
 
-                <!-- 动态工资项容器 -->
-                <LinearLayout
-                    android:id="@+id/llSalaryItems"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
-
-                <!-- 添加工资项按钮 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    android:gravity="center_vertical">
-
-                    <ImageView
-                        android:id="@+id/ivAddSalaryItem"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_add"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:contentDescription="添加工资项" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="添加工资项"
-                        android:textSize="14sp"
-                        android:textColor="@color/md_theme_primary"
-                        android:layout_marginStart="8dp" />
-                </LinearLayout>
-
-                <!-- 总工资显示 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:background="@color/md_theme_primary_container"
-                    android:padding="12dp"
-                    android:layout_marginBottom="8dp">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/tvTotalSalary"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="总工资：0 元"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/md_theme_primary" />
-
-                        <TextView
-                            android:id="@+id/tvTaxableBase"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="纳税基数：0 元"
-                            android:textSize="12sp"
-                            android:textColor="@color/md_theme_on_primary_container" />
-
-                        <TextView
-                            android:id="@+id/tvSocialSecurityBase"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="社保基数：0 元"
-                            android:textSize="12sp"
-                            android:textColor="@color/md_theme_on_primary_container" />
-                    </LinearLayout>
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- 社保设置卡片 -->
-        <androidx.cardview.widget.CardView
-            style="@style/CardStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
-
-            <LinearLayout
+            <!-- 模块2：五险一金比例 -->
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_margin="8dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
 
-                <TextView
-                    style="@style/SectionTitleStyle"
+                <include
+                    layout="@layout/insurance_module"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="🏥 社保设置"
-                    android:layout_marginTop="0dp"/>
+                    android:layout_height="wrap_content" />
+            </androidx.cardview.widget.CardView>
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="个人社保缴纳比例（%）">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etPersonalSocialInsuranceRate"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="公司社保缴纳比例（%）">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etCompanySocialInsuranceRate"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal" />
-                </com.google.android.material.textfield.TextInputLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- 公积金设置卡片 -->
-        <androidx.cardview.widget.CardView
-            style="@style/CardStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
-
+            <!-- 模块2：按钮容器-->
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp"
+                android:gravity="center">
 
-                <TextView
-                    style="@style/SectionTitleStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="🏠 公积金设置"
-                    android:layout_marginTop="0dp"/>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="个人公积金缴纳比例（%）">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etPersonalHousingFundRate"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="公司公积金缴纳比例（%）">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etCompanyHousingFundRate"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal" />
-                </com.google.android.material.textfield.TextInputLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- 操作按钮卡片 -->
-        <androidx.cardview.widget.CardView
-            style="@style/CardStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    style="@style/SectionTitleStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="⚡ 操作"
-                    android:layout_marginTop="0dp"/>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center">
-
-                    <Button
-                        android:id="@+id/btnReset"
-                        style="?android:attr/buttonBarButtonStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="🔄 重置"
-                        android:layout_marginEnd="8dp"/>
-
-                    <Button
-                        android:id="@+id/btnSave"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="💾 保存设置"
-                        android:layout_marginStart="8dp"/>
-                </LinearLayout>
-
+                <!-- 新添加的按钮 -->
                 <Button
-                    android:id="@+id/btnViewHistory"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="match_parent"
+                    android:id="@+id/btn_get_prev_data"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="📋 查看设置历史"
-                    android:layout_marginTop="8dp"/>
+                    android:text="获取上个月的数据"
+                    android:backgroundTint="@color/lightBlue"
+                    android:layout_marginEnd="16dp" />
+
+                <!-- 原有的保存按钮 -->
+                <Button
+                    android:id="@+id/btn_save_settings"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/save_settings"
+                    android:backgroundTint="@color/green" />
+
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
-        <!-- 说明文字卡片 -->
-        <androidx.cardview.widget.CardView
-            style="@style/InfoCardStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+        </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+    </ScrollView>
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="💡 使用说明"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/md_theme_primary"
-                    android:layout_marginBottom="8dp"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="• 社保和公积金比例请根据当地政策设置\n• 个人所得税将根据最新税法自动计算\n• 设置保存后立即生效\n• 建议定期检查和更新缴费比例"
-                    android:textSize="14sp"
-                    android:textColor="@color/md_theme_on_surface_variant"
-                    android:lineSpacingExtra="2dp"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-    </LinearLayout>
-</ScrollView>
+</FrameLayout>

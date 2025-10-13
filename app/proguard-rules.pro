@@ -19,18 +19,3 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
-
-# Keep ViewBinding classes
--keep class * extends androidx.viewbinding.ViewBinding {
-    public static *** inflate(...);
-    public static *** bind(...);
-}
-
-# Keep ViewModel classes
--keep class * extends androidx.lifecycle.ViewModel {
-    <init>(...);
-}
-
-# Suppress warnings for known issues
--dontwarn android.view.inputmethod.**
--dontwarn android.os.MemoryFile
