@@ -1,5 +1,7 @@
 package com.example.financialapp
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -37,10 +39,16 @@ class SettingsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.d("Settings", "进入Setting页面")
+
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_settings, container, false)
+        val btnSaveSettings = view.findViewById<Button>(R.id.btnSave)
 
         sharedViewModel = ViewModelProvider(requireActivity()).get(SharedViewModel::class.java)
+        sharedPrefs = requireContext().getSharedPreferences("financial_data", Context.MODE_PRIVATE)
+
+        // 监听月份切换事件
         sharedViewModel.yearMonth.observe(viewLifecycleOwner) { (year, month) ->
             Log.d("Settings", "dateUpdate: $year-$month")
 
