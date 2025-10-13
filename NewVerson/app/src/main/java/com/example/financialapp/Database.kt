@@ -19,7 +19,6 @@ data class FinancialDataEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val year: Int,
     val month: Int,
-    val bManual: Boolean
 )
 
 @Entity(

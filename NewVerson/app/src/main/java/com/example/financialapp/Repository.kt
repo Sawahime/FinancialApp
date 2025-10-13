@@ -8,7 +8,6 @@ class FinancialDataRepository(private val db: AppDatabase) {
     suspend fun upsertData(
         year: Int,
         month: Int,
-        bManual: Boolean,
         salaryItems: List<SalaryItemEntity>,
         insuranceItems: List<InsuranceItemEntity>
     ) {
@@ -16,13 +15,13 @@ class FinancialDataRepository(private val db: AppDatabase) {
             val existing = dao.getDataByYearMonth(year, month)
             if (existing != null) {
                 val dataId = existing.financialDataEntity.id
-                dao.updateData(FinancialDataEntity(dataId, year, month, bManual))
+                dao.updateData(FinancialDataEntity(dataId, year, month))
                 dao.deleteSalaryByDataId(dataId)
                 dao.deleteInsuranceByDataId(dataId)
                 dao.insertSalaryItems(salaryItems.map { it.copy(financialDataTableId = dataId) })
                 dao.insertInsuranceItems(insuranceItems.map { it.copy(financialDataTableId = dataId) })
             } else {
-                val newId = dao.insertData(FinancialDataEntity(0, year, month, bManual)).toInt()
+                val newId = dao.insertData(FinancialDataEntity(0, year, month)).toInt()
                 dao.insertSalaryItems(salaryItems.map { it.copy(financialDataTableId = newId) })
                 dao.insertInsuranceItems(insuranceItems.map { it.copy(financialDataTableId = newId) })
             }
@@ -57,7 +56,6 @@ class FinancialDataRepository(private val db: AppDatabase) {
             result[key] = mutableMapOf(
                 "salaryList" to salaryList,
                 "insuranceList" to insuranceList,
-                "bManual" to swi.financialDataEntity.bManual
             )
         }
 
@@ -95,7 +93,6 @@ class FinancialDataRepository(private val db: AppDatabase) {
         return mutableMapOf(
             "salaryList" to salaryList,
             "insuranceList" to insuranceList,
-            "bManual" to singleMonthData.financialDataEntity.bManual
         )
     }
 }

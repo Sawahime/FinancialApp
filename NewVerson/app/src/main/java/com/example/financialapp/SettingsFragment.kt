@@ -170,12 +170,10 @@ class SettingsFragment : Fragment() {
             insuranceList.add(mutableMap)
         }
 
-        val bManual = true// 暂时没什么用，只是用来标记这份数据是手动设置的。
         // 将数据存入有序Map
         financialDataBuffer[year * 12 + month] = mutableMapOf(
             "salaryList" to salaryList,
             "insuranceList" to insuranceList,
-            "bManual" to bManual
         )
 
         // 打印所有存储的数据
@@ -213,7 +211,6 @@ class SettingsFragment : Fragment() {
                 financialDataRepo.upsertData(
                     year,
                     month,
-                    bManual,
                     salaryEntities,
                     insuranceEntities
                 )
