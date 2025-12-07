@@ -15,7 +15,6 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import androidx.room.Room
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,21 +32,35 @@ class SettingsFragment : Fragment() {
     private lateinit var db: AppDatabase
     private lateinit var financialDataRepo: FinancialDataRepository
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d("Settings", "Settings fragment onCreate")
+
+        super.onCreate(savedInstanceState)
+        arguments?.let {}
+
+        sharedViewModel = ViewModelProvider(requireActivity()).get(SharedViewModel::class.java)
+
+        db = AppDatabase.getDatabase(requireContext())
+        financialDataRepo = FinancialDataRepository(db)
+    }
+
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.d("Settings", "Settings fragment onCreateView")
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_settings, container, false)
 
-        sharedViewModel = ViewModelProvider(requireActivity()).get(SharedViewModel::class.java)
         sharedViewModel.yearMonth.observe(viewLifecycleOwner) { (year, month) ->
-            Log.d("Settings", "dateUpdate: $year-$month")
+//            Log.d("Settings", "dateUpdate: $year-$month")
 
             if (this.year != year) {
                 lifecycleScope.launch {
-                    val persisted =
-                        withContext(Dispatchers.IO) { financialDataRepo.loadData(year) }
+                    val persisted = withContext(Dispatchers.IO) {
+                        financialDataRepo.loadData(year)
+                    }
                     if (persisted.isNotEmpty()) {
                         financialDataBuffer.clear()
                         financialDataBuffer.putAll(java.util.TreeMap(persisted))
@@ -62,17 +75,11 @@ class SettingsFragment : Fragment() {
 
         initSalaryModule(view)
         initInsuranceModule(view)
-        db = Room.databaseBuilder(
-            requireContext(),
-            AppDatabase::class.java,
-            "FinancialApp.db"
-        ).build()
+
+        db = AppDatabase.getDatabase(requireContext())
         financialDataRepo = FinancialDataRepository(db)
 
         lifecycleScope.launch {
-            // 清空数据库（开发阶段用）
-            withContext(Dispatchers.IO) { db.clearAllTables() }
-
             val persisted = withContext(Dispatchers.IO) {
                 financialDataRepo.loadData(this@SettingsFragment.year)
             }
@@ -95,6 +102,7 @@ class SettingsFragment : Fragment() {
         view.findViewById<Button>(R.id.btn_save_settings).setOnClickListener {
             saveSettings()
             Toast.makeText(requireContext(), "保存成功", Toast.LENGTH_SHORT).show()
+            sharedViewModel.updateDataBase()
         }
 
         return view
@@ -135,18 +143,21 @@ class SettingsFragment : Fragment() {
             val typeEditText = salaryItem.getChildAt(0) as EditText
             val amountEditText = salaryItem.getChildAt(1) as EditText
             val taxableCheckBox = salaryItem.getChildAt(2) as CheckBox
-            val insuredCheckBox = salaryItem.getChildAt(3) as CheckBox
+            val socialSecurityCheckBox = salaryItem.getChildAt(3) as CheckBox
+            val housingFundCheckBox = salaryItem.getChildAt(4) as CheckBox
 
             val type = typeEditText.text.toString()
             val amount = amountEditText.text.toString().toDoubleOrNull() ?: 0.0
             val isTaxable = taxableCheckBox.isChecked
-            val isInsured = insuredCheckBox.isChecked
+            val isSocialSecurity = socialSecurityCheckBox.isChecked
+            val isHousingFund = housingFundCheckBox.isChecked
 
             val mutableMap: MutableMap<String, Any> = mutableMapOf(
                 "type" to type,
                 "amount" to amount,
                 "isTaxable" to isTaxable,
-                "isInsured" to isInsured,
+                "isSocialSecurity" to isSocialSecurity,
+                "isHousingFund" to isHousingFund
             )
 
             salaryList.add(mutableMap)
@@ -177,15 +188,15 @@ class SettingsFragment : Fragment() {
         )
 
         // 打印所有存储的数据
-        financialDataBuffer.forEach { (totalMonth, data) ->
-            Log.d("SettingsData", "Date: ${(totalMonth - 1) / 12}-${(totalMonth - 1) % 12 + 1}")
-            (data["salaryList"] as? List<*>)?.forEachIndexed { index, item ->
-                Log.d("SettingsData", "Salary[$index]: $item")
-            }
-            (data["insuranceList"] as? List<*>)?.forEachIndexed { index, item ->
-                Log.d("SettingsData", "Insurance[$index]: $item")
-            }
-        }
+//        financialDataBuffer.forEach { (totalMonth, data) ->
+//            Log.d("SettingsData", "Date: ${(totalMonth - 1) / 12}-${(totalMonth - 1) % 12 + 1}")
+//            (data["salaryList"] as? List<*>)?.forEachIndexed { index, item ->
+//                Log.d("SettingsData", "Salary[$index]: $item")
+//            }
+//            (data["insuranceList"] as? List<*>)?.forEachIndexed { index, item ->
+//                Log.d("SettingsData", "Insurance[$index]: $item")
+//            }
+//        }
 
         val salaryEntities = salaryList.map { item ->
             SalaryItemEntity(
@@ -194,7 +205,8 @@ class SettingsFragment : Fragment() {
                 type = item["type"] as? String ?: "",
                 amount = item["amount"] as? Double ?: 0.0,
                 isTaxable = item["isTaxable"] as? Boolean ?: false,
-                isInsured = item["isInsured"] as? Boolean ?: false
+                isSocialSecurity = item["isSocialSecurity"] as? Boolean ?: false,
+                isHousingFund = item["isHousingFund"] as? Boolean ?: false
             )
         }
         val insuranceEntities = insuranceList.map { item ->
@@ -233,25 +245,27 @@ class SettingsFragment : Fragment() {
             valueEditText.text.clear()
         }
 
-        val currentData =
-            financialDataBuffer[year * 12 + month] as? Map<*, *> ?: return
-
+        val currentData = financialDataBuffer[year * 12 + month] as? Map<*, *> ?: return
         val salaryList = currentData["salaryList"] as? List<Map<String, Any>> ?: return
+
         // 创建相应数量的工资项标签
         repeat(salaryList.size) { addSalaryItem() }
+
         // 显示工资值
         for (i in 0 until salaryItemsList.childCount) {
             val salaryItem = salaryItemsList.getChildAt(i) as LinearLayout
             val typeEditText = salaryItem.getChildAt(0) as EditText
             val amountEditText = salaryItem.getChildAt(1) as EditText
             val taxableCheckBox = salaryItem.getChildAt(2) as CheckBox
-            val insuredCheckBox = salaryItem.getChildAt(3) as CheckBox
+            val socialSecurityCheckBox = salaryItem.getChildAt(3) as CheckBox
+            val housingFundCheckBox = salaryItem.getChildAt(4) as CheckBox
 
             val salaryData = salaryList[i]
             typeEditText.setText(salaryData["type"]?.toString() ?: "")
             amountEditText.setText(salaryData["amount"]?.toString() ?: "0")
             taxableCheckBox.isChecked = salaryData["isTaxable"] as? Boolean ?: false
-            insuredCheckBox.isChecked = salaryData["isInsured"] as? Boolean ?: false
+            socialSecurityCheckBox.isChecked = salaryData["isSocialSecurity"] as? Boolean ?: false
+            housingFundCheckBox.isChecked = salaryData["isHousingFund"] as? Boolean ?: false
         }
 
         val insuranceList = currentData["insuranceList"] as? List<Map<String, Any>> ?: return
@@ -300,7 +314,7 @@ class SettingsFragment : Fragment() {
             }
 
             // 计算当月社保公积金个人部分扣除
-            val personalInsuranceRate = insuranceList.find {
+            val personalSocialSecurityRate = insuranceList.find {
                 it["type"]?.toString() == "personal_social"
             }?.get("value")?.toString()?.toDoubleOrNull() ?: 0.0
 
@@ -309,8 +323,15 @@ class SettingsFragment : Fragment() {
             }?.get("value")?.toString()?.toDoubleOrNull() ?: 0.0
 
             // 计算社保公积金基数（应税且参保的收入）
-            val insuranceBase = salaryList.sumOf { item ->
-                if (item["isInsured"] as? Boolean == true) {
+            val socialSecurityBase = salaryList.sumOf { item ->
+                if (item["isSocialSecurity"] as? Boolean == true) {
+                    (item["amount"] as? Double) ?: 0.0
+                } else {
+                    0.0
+                }
+            }
+            val housingFundBase=salaryList.sumOf { item ->
+                if (item["isHousingFund"] as? Boolean == true) {
                     (item["amount"] as? Double) ?: 0.0
                 } else {
                     0.0
@@ -318,7 +339,7 @@ class SettingsFragment : Fragment() {
             }
 
             val monthlyDeduction =
-                insuranceBase * (personalInsuranceRate + personalHousingFundRate) / 100
+                (socialSecurityBase * personalSocialSecurityRate + housingFundBase * personalHousingFundRate)/ 100
             val basicDeduction = 5000.0// 个税起征点
 
             cumulativeIncome += taxableMonthlyIncome
@@ -330,21 +351,21 @@ class SettingsFragment : Fragment() {
             // 更新累计已缴税额
             cumulativeTaxPaid = cumulativeTax
 
-            Log.d("TaxCalculation", "${year}年${month}月个人所得税计算:")
-            Log.d("TaxCalculation", "  本月收入: ${"%.2f".format(taxableMonthlyIncome)}")
-            Log.d(
-                "TaxCalculation",
-                "  本月扣除: ${"%.2f".format(monthlyDeduction)} (社保公积金) + 5000.0 (基本减除) = ${
-                    "%.2f".format(monthlyDeduction + basicDeduction)
-                }"
-            )
-            Log.d("TaxCalculation", "  本月应缴税额: ${"%.2f".format(monthlyTax)}")
+//            Log.d("Settings", "${year}年${month}月个人所得税计算:")
+//            Log.d("Settings", "  本月收入: ${"%.2f".format(taxableMonthlyIncome)}")
+//            Log.d(
+//                "Settings",
+//                "  本月扣除: ${"%.2f".format(monthlyDeduction)} (社保公积金) + 5000.0 (基本减除) = ${
+//                    "%.2f".format(monthlyDeduction + basicDeduction)
+//                }"
+//            )
+//            Log.d("Settings", "  本月应缴税额: ${"%.2f".format(monthlyTax)}")
         }
-        Log.d("TaxCalculation", "${year}年财务累计值:")
-        Log.d("TaxCalculation", "  累计收入: ${"%.2f".format(cumulativeIncome)}")
-        Log.d("TaxCalculation", "  累计扣除: ${"%.2f".format(cumulativeDeduction)}")
-        Log.d("TaxCalculation", "  累计应纳税所得额: ${"%.2f".format(cumulativeTaxableIncome)}")
-        Log.d("TaxCalculation", "  累计应缴税额: ${"%.2f".format(cumulativeTax)}")
+//        Log.d("Settings", "${year}年财务累计值:")
+//        Log.d("Settings", "  累计收入: ${"%.2f".format(cumulativeIncome)}")
+//        Log.d("Settings", "  累计扣除: ${"%.2f".format(cumulativeDeduction)}")
+//        Log.d("Settings", "  累计应纳税所得额: ${"%.2f".format(cumulativeTaxableIncome)}")
+//        Log.d("Settings", "  累计应缴税额: ${"%.2f".format(cumulativeTax)}")
     }
 
     private fun calculateTaxByThreshold(amount: Double): Double {

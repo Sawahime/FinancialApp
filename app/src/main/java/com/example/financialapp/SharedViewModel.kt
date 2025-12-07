@@ -1,5 +1,6 @@
 package com.example.financialapp
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
@@ -13,5 +14,10 @@ class SharedViewModel : ViewModel() {
         this.year.value = year
         this.month.value = month
         yearMonth.value = Pair(year, month)
+    }
+
+    val dbUpdated= MutableLiveData<Boolean>()
+    fun updateDataBase() {
+        dbUpdated.value = !(dbUpdated.value ?: true)
     }
 }
