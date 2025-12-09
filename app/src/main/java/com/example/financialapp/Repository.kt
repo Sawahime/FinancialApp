@@ -42,7 +42,8 @@ class FinancialDataRepository(private val db: AppDatabase) {
                     "type" to item.type,
                     "amount" to item.amount,
                     "isTaxable" to item.isTaxable,
-                    "isInsured" to item.isInsured
+                    "isSocialSecurity" to item.isSocialSecurity,
+                    "isHousingFund" to item.isHousingFund
                 )
             }.toMutableList<MutableMap<String, Any>>()
             val insuranceList = swi.insuranceList.map { item ->
@@ -79,7 +80,8 @@ class FinancialDataRepository(private val db: AppDatabase) {
                 "type" to item.type,
                 "amount" to item.amount,
                 "isTaxable" to item.isTaxable,
-                "isInsured" to item.isInsured
+                "isSocialSecurity" to item.isSocialSecurity,
+                "isHousingFund" to item.isHousingFund
             )
         }.toMutableList<MutableMap<String, Any>>()
 

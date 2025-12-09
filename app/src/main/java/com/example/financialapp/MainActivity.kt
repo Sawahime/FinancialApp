@@ -1,6 +1,7 @@
 package com.example.financialapp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.EditText
 import android.widget.ImageButton
@@ -19,6 +20,7 @@ class MainActivity : AppCompatActivity() {
     private val dateNavigator = DateNavigator()
     private val financialFragment = FinancialFragment()
     private val settingsFragment = SettingsFragment()
+    private var currentFragment: Fragment = financialFragment
     private lateinit var sharedViewModel: SharedViewModel// 用于将日期更新同步到各个页面
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,12 +91,10 @@ class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
-        // 初始默认页面
+        // Initialize default fragment, it will trigger SelectedListener.
         bottomNavigator.selectedItemId = R.id.bottom_nav_menu_financial
-        switchFragment(financialFragment)
     }
 
-    
     private fun updateDateNavigatorTextAndSharedViewModel() {
         val tvDate = findViewById<TextView>(R.id.tvCurrentDate)
         val (year, month) = dateNavigator.getCurrYearMonthPair()
@@ -132,9 +132,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun switchFragment(fragment: Fragment) {
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.container, fragment)
-            .commit()
+        Log.d("MainActivity", "switch fragment")
+
+        if(!fragment.isAdded){
+            supportFragmentManager
+                .beginTransaction()
+                .add(R.id.container, fragment)
+                .commit()
+        }
+
+        if(currentFragment==fragment) return
+
+        supportFragmentManager.beginTransaction().apply {
+            hide(currentFragment)
+            show(fragment)
+            commit()
+        }
+        currentFragment=fragment
     }
 }

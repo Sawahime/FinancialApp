@@ -30,7 +30,13 @@
     <CheckBox
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="参保"
+        android:text="社保"
+        android:buttonTint="#F44336" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="公积金"
         android:buttonTint="#F44336" />
 
     <!-- 删除工资项按钮 -->

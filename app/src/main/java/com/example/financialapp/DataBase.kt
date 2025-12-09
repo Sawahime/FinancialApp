@@ -1,5 +1,6 @@
 package com.example.financialapp
 
+import android.content.Context
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Embedded
@@ -10,6 +11,7 @@ import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Relation
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.Update
@@ -37,7 +39,8 @@ data class SalaryItemEntity(
     val type: String,
     val amount: Double,
     val isTaxable: Boolean,
-    val isInsured: Boolean
+    val isSocialSecurity: Boolean,  // 是否计入社保基数
+    val isHousingFund: Boolean      // 是否计入公积金基数
 )
 
 @Entity(
@@ -112,4 +115,21 @@ interface FinancialDataDao {
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun financialDataDao(): FinancialDataDao
+
+    companion object {
+        @Volatile  // 1. 确保多线程可见性：主线程和工作线程都能看到最新的 INSTANCE 值
+        private var INSTANCE: AppDatabase? = null  // 2. 静态变量，整个应用生命周期只存在一份
+
+        fun getDatabase(context: Context): AppDatabase {
+            return INSTANCE ?: synchronized(this) {  // 3. 同步锁：防止多线程同时创建实例
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,  // 4. 使用 Application Context（避免内存泄漏）
+                    AppDatabase::class.java,
+                    "FinancialApp.db"
+                ).build()
+                INSTANCE = instance  // 5. 保存唯一实例
+                instance
+            }
+        }
+    }
 }
