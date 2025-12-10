@@ -143,21 +143,15 @@ class SettingsFragment : Fragment() {
             val typeEditText = salaryItem.getChildAt(0) as EditText
             val amountEditText = salaryItem.getChildAt(1) as EditText
             val taxableCheckBox = salaryItem.getChildAt(2) as CheckBox
-            val socialSecurityCheckBox = salaryItem.getChildAt(3) as CheckBox
-            val housingFundCheckBox = salaryItem.getChildAt(4) as CheckBox
 
             val type = typeEditText.text.toString()
             val amount = amountEditText.text.toString().toDoubleOrNull() ?: 0.0
             val isTaxable = taxableCheckBox.isChecked
-            val isSocialSecurity = socialSecurityCheckBox.isChecked
-            val isHousingFund = housingFundCheckBox.isChecked
 
             val mutableMap: MutableMap<String, Any> = mutableMapOf(
                 "type" to type,
                 "amount" to amount,
                 "isTaxable" to isTaxable,
-                "isSocialSecurity" to isSocialSecurity,
-                "isHousingFund" to isHousingFund
             )
 
             salaryList.add(mutableMap)
@@ -171,7 +165,7 @@ class SettingsFragment : Fragment() {
             val valueEditText = insuranceItem.getChildAt(1) as EditText
 
             val type = typeTextView.tag.toString()
-            val value = valueEditText.text.toString()
+            val value = valueEditText.text.toString().toDoubleOrNull() ?: 0.0
 
             val mutableMap: MutableMap<String, Any> = mutableMapOf(
                 "type" to type,
@@ -205,8 +199,6 @@ class SettingsFragment : Fragment() {
                 type = item["type"] as? String ?: "",
                 amount = item["amount"] as? Double ?: 0.0,
                 isTaxable = item["isTaxable"] as? Boolean ?: false,
-                isSocialSecurity = item["isSocialSecurity"] as? Boolean ?: false,
-                isHousingFund = item["isHousingFund"] as? Boolean ?: false
             )
         }
         val insuranceEntities = insuranceList.map { item ->
@@ -214,7 +206,7 @@ class SettingsFragment : Fragment() {
                 id = 0,
                 financialDataTableId = 0,
                 type = item["type"] as? String ?: "",
-                value = item["value"]?.toString() ?: "0"
+                value = item["value"] as? Double ?:0.0
             )
         }
 
@@ -232,8 +224,6 @@ class SettingsFragment : Fragment() {
                 Log.e("Settings", "persist settings failed", e)
             }
         }
-
-        calTax(year)
     }
 
     private fun flushSettings(year: Int, month: Int) {
@@ -257,15 +247,11 @@ class SettingsFragment : Fragment() {
             val typeEditText = salaryItem.getChildAt(0) as EditText
             val amountEditText = salaryItem.getChildAt(1) as EditText
             val taxableCheckBox = salaryItem.getChildAt(2) as CheckBox
-            val socialSecurityCheckBox = salaryItem.getChildAt(3) as CheckBox
-            val housingFundCheckBox = salaryItem.getChildAt(4) as CheckBox
 
             val salaryData = salaryList[i]
             typeEditText.setText(salaryData["type"]?.toString() ?: "")
             amountEditText.setText(salaryData["amount"]?.toString() ?: "0")
             taxableCheckBox.isChecked = salaryData["isTaxable"] as? Boolean ?: false
-            socialSecurityCheckBox.isChecked = salaryData["isSocialSecurity"] as? Boolean ?: false
-            housingFundCheckBox.isChecked = salaryData["isHousingFund"] as? Boolean ?: false
         }
 
         val insuranceList = currentData["insuranceList"] as? List<Map<String, Any>> ?: return
@@ -274,110 +260,7 @@ class SettingsFragment : Fragment() {
             val valueEditText = insuranceItem.getChildAt(1) as EditText
 
             val insuranceData = insuranceList[i]
-            valueEditText.setText(insuranceData["value"]?.toString() ?: "0")
-        }
-    }
-
-    private fun calTax(year: Int) {
-        val thisYearData = financialDataBuffer.filterKeys { total ->
-            (total - 1) / 12 == year
-        }
-
-        // 累计收入
-        var cumulativeIncome = 0.0
-        // 累计扣除（这部分不用交税）
-        var cumulativeDeduction = 0.0
-        // 累计已缴税额
-        var cumulativeTaxPaid = 0.0
-
-        // 累计应纳税所得额
-        var cumulativeTaxableIncome = 0.0
-        // 累计应缴税额
-        var cumulativeTax = 0.0
-
-        thisYearData.forEach { (totalMonth, data) ->
-            val month = (totalMonth - 1) % 12 + 1
-
-            // 获取当月数据
-            val salaryList =
-                data["salaryList"] as? MutableList<MutableMap<String, Any>> ?: mutableListOf()
-            val insuranceList =
-                data["insuranceList"] as? MutableList<MutableMap<String, Any>> ?: mutableListOf()
-
-            // 计算当月收入（应税部分）
-            val taxableMonthlyIncome = salaryList.sumOf { item ->
-                if (item["isTaxable"] as? Boolean == true) {
-                    (item["amount"] as? Double) ?: 0.0
-                } else {
-                    0.0
-                }
-            }
-
-            // 计算当月社保公积金个人部分扣除
-            val personalSocialSecurityRate = insuranceList.find {
-                it["type"]?.toString() == "personal_social"
-            }?.get("value")?.toString()?.toDoubleOrNull() ?: 0.0
-
-            val personalHousingFundRate = insuranceList.find {
-                it["type"]?.toString() == "personal_housing"
-            }?.get("value")?.toString()?.toDoubleOrNull() ?: 0.0
-
-            // 计算社保公积金基数（应税且参保的收入）
-            val socialSecurityBase = salaryList.sumOf { item ->
-                if (item["isSocialSecurity"] as? Boolean == true) {
-                    (item["amount"] as? Double) ?: 0.0
-                } else {
-                    0.0
-                }
-            }
-            val housingFundBase=salaryList.sumOf { item ->
-                if (item["isHousingFund"] as? Boolean == true) {
-                    (item["amount"] as? Double) ?: 0.0
-                } else {
-                    0.0
-                }
-            }
-
-            val monthlyDeduction =
-                (socialSecurityBase * personalSocialSecurityRate + housingFundBase * personalHousingFundRate)/ 100
-            val basicDeduction = 5000.0// 个税起征点
-
-            cumulativeIncome += taxableMonthlyIncome
-            cumulativeDeduction += monthlyDeduction + basicDeduction
-            cumulativeTaxableIncome = cumulativeIncome - cumulativeDeduction
-            cumulativeTax = calculateTaxByThreshold(cumulativeTaxableIncome)
-            // 本月应缴税额 = 累计应缴税额 - 累计已缴税额
-            val monthlyTax = cumulativeTax - cumulativeTaxPaid
-            // 更新累计已缴税额
-            cumulativeTaxPaid = cumulativeTax
-
-//            Log.d("Settings", "${year}年${month}月个人所得税计算:")
-//            Log.d("Settings", "  本月收入: ${"%.2f".format(taxableMonthlyIncome)}")
-//            Log.d(
-//                "Settings",
-//                "  本月扣除: ${"%.2f".format(monthlyDeduction)} (社保公积金) + 5000.0 (基本减除) = ${
-//                    "%.2f".format(monthlyDeduction + basicDeduction)
-//                }"
-//            )
-//            Log.d("Settings", "  本月应缴税额: ${"%.2f".format(monthlyTax)}")
-        }
-//        Log.d("Settings", "${year}年财务累计值:")
-//        Log.d("Settings", "  累计收入: ${"%.2f".format(cumulativeIncome)}")
-//        Log.d("Settings", "  累计扣除: ${"%.2f".format(cumulativeDeduction)}")
-//        Log.d("Settings", "  累计应纳税所得额: ${"%.2f".format(cumulativeTaxableIncome)}")
-//        Log.d("Settings", "  累计应缴税额: ${"%.2f".format(cumulativeTax)}")
-    }
-
-    private fun calculateTaxByThreshold(amount: Double): Double {
-        return when {
-            amount <= 0 -> 0.0
-            amount <= 36000 -> amount * 0.03
-            amount <= 144000 -> amount * 0.10 - 2520
-            amount <= 300000 -> amount * 0.20 - 16920
-            amount <= 420000 -> amount * 0.25 - 31920
-            amount <= 660000 -> amount * 0.30 - 52920
-            amount <= 960000 -> amount * 0.35 - 85920
-            else -> amount * 0.45 - 181920
+            valueEditText.setText(insuranceData["value"].toString())
         }
     }
 }
