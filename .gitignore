@@ -6,6 +6,7 @@
 /local.properties
 /build
 /captures
+*release/
 
 local.properties
 .DS_Store
