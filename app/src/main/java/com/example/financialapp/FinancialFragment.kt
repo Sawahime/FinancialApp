@@ -45,15 +45,7 @@ class FinancialFragment : Fragment() {
         financialDataRepo = FinancialDataRepository(db)
         lifecycleScope.launch {
             // Clear data base, only enable while develop
-            withContext(Dispatchers.IO) { db.clearAllTables() }
-
-            val persisted = withContext(Dispatchers.IO) {
-                financialDataRepo.loadData(year)
-            }
-            if (persisted.isNotEmpty()) {
-                financialDataBuffer.clear()
-                financialDataBuffer.putAll(TreeMap(persisted))
-            }
+//            withContext(Dispatchers.IO) { db.clearAllTables() }
         }
     }
 
@@ -87,12 +79,16 @@ class FinancialFragment : Fragment() {
                         financialDataBuffer.clear()
                         financialDataBuffer.putAll(TreeMap(persisted))
                     }
-                }
-            }
 
-            this.year = year
-            this.month = month
-            updateUI()
+                    this@FinancialFragment.year = year
+                    this@FinancialFragment.month = month
+                    updateUI()
+                }
+            }else{
+                this.year = year
+                this.month = month
+                updateUI()
+            }
         }
 
         sharedViewModel.dbUpdated.observe(viewLifecycleOwner){
@@ -115,6 +111,8 @@ class FinancialFragment : Fragment() {
     }
 
     private fun updateUI() {
+        Log.d("Financial", "updateUI")
+
         // Filter data for the current year
         val thisYearData = financialDataBuffer.filterKeys { total ->
             (total - 1) / 12 == this.year
