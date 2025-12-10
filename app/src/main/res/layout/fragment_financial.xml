@@ -17,6 +17,40 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- 净收入 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/green"
+                app:cardCornerRadius="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="净收入"
+                        android:textSize="20sp"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_net_income"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="¥0.00"
+                        android:textSize="32sp"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold"
+                        android:layout_marginTop="8dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- 税前收入 -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -30,15 +64,16 @@
                     android:padding="18dp">
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="税前收入"
-                        android:textSize="18sp"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
                         android:textColor="?android:attr/textColorSecondary" />
 
                     <TextView
                         android:id="@+id/tv_pre_tax_income"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="¥0.00"
                         android:textSize="24sp"
@@ -60,18 +95,20 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="社保公积金"
-                        android:textSize="18sp"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
                         android:textColor="?android:attr/textColorSecondary" />
 
                     <TextView
                         android:id="@+id/tv_insurance"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="¥0.00"
                         android:textSize="20sp"
+                        android:textStyle="bold"
                         android:layout_marginTop="4dp"
                         android:textColor="@color/red" />
                 </LinearLayout>
@@ -90,54 +127,22 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="个人所得税"
-                        android:textSize="18sp"
+                        android:text="税"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
                         android:textColor="?android:attr/textColorSecondary" />
 
                     <TextView
                         android:id="@+id/tv_tax"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="¥0.00"
                         android:textSize="20sp"
+                        android:textStyle="bold"
                         android:layout_marginTop="4dp"
                         android:textColor="@color/red" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- 实际到手工资 -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/green"
-                app:cardCornerRadius="12dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="实际到手工资"
-                        android:textSize="20sp"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tv_net_income"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="¥0.00"
-                        android:textSize="32sp"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold"
-                        android:layout_marginTop="8dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -150,23 +155,22 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="16dp"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="到本月为止年收入"
-                        android:textSize="16sp" />
+                        android:text="累计年收入"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tv_year_to_date_income"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="¥0.00"
-                        android:textSize="18sp"
+                        android:textSize="20sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -180,23 +184,22 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="16dp"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical"
+                    android:padding="16dp" >
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:text="累计已缴税额"
-                        android:textSize="16sp" />
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tv_year_to_date_tax"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="¥0.00"
-                        android:textSize="18sp"
+                        android:textSize="20sp"
                         android:textStyle="bold"
                         android:textColor="@color/red" />
                 </LinearLayout>
