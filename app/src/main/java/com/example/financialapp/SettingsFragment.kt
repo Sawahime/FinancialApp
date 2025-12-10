@@ -160,7 +160,7 @@ class SettingsFragment : Fragment() {
 
             salaryList.add(mutableMap)
         }
-        
+
         if(salaryList.isEmpty()) return
 
         val insuranceList = mutableListOf<MutableMap<String, Any>>()

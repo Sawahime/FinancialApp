@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import java.util.TreeMap
 
 class FinancialFragment : Fragment() {
@@ -38,11 +39,12 @@ class FinancialFragment : Fragment() {
         // 获取Activity的ViewModel
         // requireActivity() 返回的是宿主 MainActivity
         // 所以 ViewModelProvider 返回的 SharedViewModel 实例和 MainActivity 里的那个是同一个
-        sharedViewModel = ViewModelProvider(requireActivity()).get(SharedViewModel::class.java)
+        sharedViewModel = ViewModelProvider(requireActivity())[SharedViewModel::class.java]
 
         db = AppDatabase.getDatabase(requireContext())
         financialDataRepo = FinancialDataRepository(db)
         lifecycleScope.launch {
+            // Clear data base, only enable while develop
             withContext(Dispatchers.IO) { db.clearAllTables() }
 
             val persisted = withContext(Dispatchers.IO) {
@@ -50,7 +52,7 @@ class FinancialFragment : Fragment() {
             }
             if (persisted.isNotEmpty()) {
                 financialDataBuffer.clear()
-                financialDataBuffer.putAll(java.util.TreeMap(persisted))
+                financialDataBuffer.putAll(TreeMap(persisted))
             }
         }
     }
@@ -83,7 +85,7 @@ class FinancialFragment : Fragment() {
                     }
                     if (persisted.isNotEmpty()) {
                         financialDataBuffer.clear()
-                        financialDataBuffer.putAll(java.util.TreeMap(persisted))
+                        financialDataBuffer.putAll(TreeMap(persisted))
                     }
                 }
             }
@@ -102,7 +104,7 @@ class FinancialFragment : Fragment() {
                 }
                 if (persisted.isNotEmpty()) {
                     financialDataBuffer.clear()
-                    financialDataBuffer.putAll(java.util.TreeMap(persisted))
+                    financialDataBuffer.putAll(TreeMap(persisted))
                 }
 
                 updateUI()
@@ -122,14 +124,14 @@ class FinancialFragment : Fragment() {
         var insurance = 0.0 // Social security and housing fund for current month
         var tax = 0.0 // Tax payable for current month
         var netIncome = 0.0 // Net income (after tax and deductions) for current month
-        var cumulativeIncome = 0.0 // Cumulative income from January to current month
-        var cumulativeTax = 0.0 // Cumulative tax paid from January to current month
+        var cumulativeIncome : Double // Cumulative income from January to current month
+        var cumulativeTax : Double // Cumulative tax paid from January to current month
 
         // Get current month data
         val monthData = thisYearData[this.year * 12 + this.month]
         if (monthData != null) {
-            val salaryList = monthData["salaryList"] as? MutableList<MutableMap<String, Any>> ?: mutableListOf()
-            val insuranceList = monthData["insuranceList"] as? MutableList<MutableMap<String, Any>> ?: mutableListOf()
+            val salaryList = (monthData["salaryList"] as? List<*>)?.filterIsInstance<MutableMap<String, Any>>()?.toMutableList() ?: mutableListOf()
+            val insuranceList = (monthData["insuranceList"] as? List<*>)?.filterIsInstance<MutableMap<String, Any>>()?.toMutableList() ?: mutableListOf()
 
             // TODO: How to deal with the income which is not taxable?
             // Calculate pre-tax income (taxable items only)
@@ -169,17 +171,15 @@ class FinancialFragment : Fragment() {
         var accumulativeIncome = 0.0 // Cumulative taxable income
         var cumulativeDeduction = 0.0 // Cumulative deductions
         var accumulativeTaxPaid = 0.0 // Cumulative tax paid up to previous month
-        var accumulativeTax = 0.0 // Cumulative tax payable (including current month)
+        var accumulativeTax : Double // Cumulative tax payable (including current month)
 
         // Calculate cumulative values from January to current month
         for (month in 1..this.month) {
             val currentMonthData = thisYearData[this.year * 12 + month]
             if (currentMonthData == null) continue
 
-            val currentSalaryList =
-                currentMonthData["salaryList"] as? MutableList<MutableMap<String, Any>> ?: mutableListOf()
-            val currentInsuranceList =
-                currentMonthData["insuranceList"] as? MutableList<MutableMap<String, Any>> ?: mutableListOf()
+            val currentSalaryList = (currentMonthData["salaryList"] as? List<*>)?.filterIsInstance<MutableMap<String, Any>>()?.toMutableList() ?: mutableListOf()
+            val currentInsuranceList = (currentMonthData["insuranceList"] as? List<*>)?.filterIsInstance<MutableMap<String, Any>>()?.toMutableList() ?: mutableListOf()
 
             // Monthly taxable income
             val monthlyTaxableIncome = currentSalaryList.sumOf { item ->
@@ -243,12 +243,12 @@ class FinancialFragment : Fragment() {
         cumulativeTax = accumulativeTaxPaid
 
         val currencyFormat = "¥%,.2f"
-        tvPreTaxIncome.text = String.format(currencyFormat, preTaxIncome)
-        tvInsurance.text = String.format(currencyFormat, insurance)
-        tvTax.text = String.format(currencyFormat, tax)
-        tvNetIncome.text = String.format(currencyFormat, netIncome)
-        tvYearToDateIncome.text = String.format(currencyFormat, cumulativeIncome)
-        tvYearToDateTax.text = String.format(currencyFormat, cumulativeTax)
+        tvPreTaxIncome.text = String.format(Locale.getDefault(), currencyFormat, preTaxIncome)
+        tvInsurance.text = String.format(Locale.getDefault(), currencyFormat, insurance)
+        tvTax.text = String.format(Locale.getDefault(), currencyFormat, tax)
+        tvNetIncome.text = String.format(Locale.getDefault(), currencyFormat, netIncome)
+        tvYearToDateIncome.text = String.format(Locale.getDefault(), currencyFormat, cumulativeIncome)
+        tvYearToDateTax.text = String.format(Locale.getDefault(), currencyFormat, cumulativeTax)
 
         Log.d("Financial", "${this.year}年${this.month}月财务统计:")
         Log.d("Financial", "  税前收入: ${"%.2f".format(preTaxIncome)}")
