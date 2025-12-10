@@ -39,8 +39,6 @@ data class SalaryItemEntity(
     val type: String,
     val amount: Double,
     val isTaxable: Boolean,
-    val isSocialSecurity: Boolean,  // 是否计入社保基数
-    val isHousingFund: Boolean      // 是否计入公积金基数
 )
 
 @Entity(
@@ -57,7 +55,7 @@ data class InsuranceItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val financialDataTableId: Int,
     val type: String,
-    val value: String
+    val value: Double
 )
 
 // Room 中的组合关系类（relationship data class），它的作用是把多张表的关联数据“一次性加载”成一个 Kotlin 对象
