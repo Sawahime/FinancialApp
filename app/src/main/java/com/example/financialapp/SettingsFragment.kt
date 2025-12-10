@@ -148,6 +148,10 @@ class SettingsFragment : Fragment() {
             val amount = amountEditText.text.toString().toDoubleOrNull() ?: 0.0
             val isTaxable = taxableCheckBox.isChecked
 
+            if (amount==0.0) {
+                continue
+            }
+
             val mutableMap: MutableMap<String, Any> = mutableMapOf(
                 "type" to type,
                 "amount" to amount,
@@ -156,6 +160,8 @@ class SettingsFragment : Fragment() {
 
             salaryList.add(mutableMap)
         }
+        
+        if(salaryList.isEmpty()) return
 
         val insuranceList = mutableListOf<MutableMap<String, Any>>()
         for (i in 0 until insuranceItemList.childCount) {
