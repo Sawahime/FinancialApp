@@ -55,39 +55,28 @@ class SettingsFragment : Fragment() {
 
         sharedViewModel.yearMonth.observe(viewLifecycleOwner) { (year, month) ->
 //            Log.d("Settings", "dateUpdate: $year-$month")
-
+            this.month = month
             if (this.year != year) {
+                this.year = year
+
                 lifecycleScope.launch {
                     val persisted = withContext(Dispatchers.IO) {
                         financialDataRepo.loadData(year)
                     }
+                    financialDataBuffer.clear()
                     if (persisted.isNotEmpty()) {
-                        financialDataBuffer.clear()
                         financialDataBuffer.putAll(java.util.TreeMap(persisted))
                     }
-                }
-            }
 
-            this.year = year
-            this.month = month
-            flushSettings(year, month)
+                    flushSettings(year, month)
+                }
+            } else {
+                flushSettings(year, month)
+            }
         }
 
         initSalaryModule(view)
         initInsuranceModule(view)
-
-        db = AppDatabase.getDatabase(requireContext())
-        financialDataRepo = FinancialDataRepository(db)
-
-        lifecycleScope.launch {
-            val persisted = withContext(Dispatchers.IO) {
-                financialDataRepo.loadData(this@SettingsFragment.year)
-            }
-            if (persisted.isNotEmpty()) {
-                financialDataBuffer.clear()
-                financialDataBuffer.putAll(java.util.TreeMap(persisted))
-            }
-        }
 
         // "获取上个月数据"按钮点击事件
         view.findViewById<Button>(R.id.btn_get_prev_data).setOnClickListener {
@@ -102,6 +91,10 @@ class SettingsFragment : Fragment() {
         view.findViewById<Button>(R.id.btn_save_settings).setOnClickListener {
             saveSettings()
             Toast.makeText(requireContext(), "保存成功", Toast.LENGTH_SHORT).show()
+            sharedViewModel.updateDataBase()
+        }
+        view.findViewById<Button>(R.id.btn_delete_data).setOnClickListener {
+            deleteData(this.year, this.month)
             sharedViewModel.updateDataBase()
         }
 
@@ -267,6 +260,26 @@ class SettingsFragment : Fragment() {
 
             val insuranceData = insuranceList[i]
             valueEditText.setText(insuranceData["value"].toString())
+        }
+    }
+
+    private fun deleteData(year: Int, month: Int) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                financialDataRepo.deleteDataByYearMonth(year, month)
+
+                financialDataBuffer.remove(year * 12 + month)
+
+                withContext(Dispatchers.Main) {
+                    flushSettings(year, month)
+                    Toast.makeText(requireContext(), "删除成功", Toast.LENGTH_SHORT).show()
+                    sharedViewModel.updateDataBase()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "删除失败", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 }

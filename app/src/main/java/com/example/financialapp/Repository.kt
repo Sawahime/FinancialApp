@@ -93,4 +93,10 @@ class FinancialDataRepository(private val db: AppDatabase) {
             "insuranceList" to insuranceList,
         )
     }
+
+    suspend fun deleteDataByYearMonth(year: Int, month: Int) {
+        db.withTransaction {
+            dao.deleteByYearMonth(year, month)
+        }
+    }
 }

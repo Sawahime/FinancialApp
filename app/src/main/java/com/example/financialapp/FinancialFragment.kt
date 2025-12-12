@@ -69,24 +69,22 @@ class FinancialFragment : Fragment() {
         // viewLifecycleOwner 是 Fragment 的生命周期 Owner, 用于确保只在Fragment的生命周期Owner处于活跃状态时接收数据更新
         sharedViewModel.yearMonth.observe(viewLifecycleOwner) { (year, month) ->
 //            Log.d("Financial", "dateUpdate: $year-$month")
-
+            this.month = month
             if (this.year != year) {
+                this.year = year
+
                 lifecycleScope.launch {
                     val persisted = withContext(Dispatchers.IO) {
                         financialDataRepo.loadData(year)
                     }
+                    financialDataBuffer.clear()
                     if (persisted.isNotEmpty()) {
-                        financialDataBuffer.clear()
                         financialDataBuffer.putAll(TreeMap(persisted))
                     }
 
-                    this@FinancialFragment.year = year
-                    this@FinancialFragment.month = month
                     updateUI()
                 }
             }else{
-                this.year = year
-                this.month = month
                 updateUI()
             }
         }
@@ -98,8 +96,8 @@ class FinancialFragment : Fragment() {
                 val persisted = withContext(Dispatchers.IO) {
                     financialDataRepo.loadData(year)
                 }
+                financialDataBuffer.clear()
                 if (persisted.isNotEmpty()) {
-                    financialDataBuffer.clear()
                     financialDataBuffer.putAll(TreeMap(persisted))
                 }
 

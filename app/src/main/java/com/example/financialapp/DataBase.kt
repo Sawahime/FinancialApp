@@ -87,6 +87,9 @@ interface FinancialDataDao {
     @Query("SELECT * FROM FinancialDataTable")
     suspend fun getAllData(): List<QueryDataContainer>
 
+    @Query("DELETE FROM FinancialDataTable WHERE year = :year AND month = :month")
+    suspend fun deleteByYearMonth(year: Int, month: Int)
+
     @Insert
     suspend fun insertData(financialDataEntity: FinancialDataEntity): Long// 返回插入行的ID，如果主键冲突会抛出异常
 
